@@ -1,0 +1,66 @@
+
+* Description
+  The plugin adds incremental-reading-like mode to anki.
+  Usage:
+  1. Add your texts to Texts subdeck
+     For each text you want to read add a new card to Texts subdeck as following:
+     - "data" field: the text 
+     - "source" field: the source of the text (e.g. url of the page the text from)
+     ? Alternative way -- via menu 
+
+  2. Check unknown words in Filtering subdeck
+     ! TODO how to do the checking
+     Select "Supply cards" from menu
+
+  3. Memoize filtered words in Memoizing subdeck
+     This is just the regular anki use case.
+
+  4. Read a text
+     Once you learned words good enough, select "Update available texts" from menu.
+     Now each text in Available subdeck are consisting of familiar words, go ahead!
+
+* Specification
+  - Decks: 
+    - Texts (data, source, availability)
+    - Words (word, *text, context)
+    - Available (filter Texts: availability > AVAILABILITY_THRESHOLD)
+    - Filtering (filter Words: no context && first time seen) 
+    - Memoizing (filter Words: with context)
+ 
+  - Extra functions:
+    - add text:
+      │ anki run dialog "Add new card" to Texts
+      │ user provides data and source fields
+      │ anki adds card t = (data, source) to Texts deck
+      │ plugin parses text 
+      │ anki for each word adds a card (word, text -> t, NULL) to Words
+      ├─if already exists: 
+      │ │ skip the card 
+      │
+      │ end
+      
+    - supply cards:
+      │ for each card:
+      │
+      │ plugin checks whether card need to be memoized
+      ├─if not: 
+      │ │ skip the card 
+      │
+      │ plugin retreives translation/meaning for the word
+      ├─if failed: 
+      │ │ mark the card as failure
+      │ │ show message
+      │ │ stop the function
+      │
+      │ plugin updates context of the word to translation/meaning 
+      │ end
+
+    - update available texts
+      │ plugin calculates availability for each text using getAvailability 
+      │ plugin updates availability of the texts
+      │ end
+
+  - Parameters:
+    - global deck name (default SRead)
+    - AVAILABILITY_THRESHOLD (default !TODO)
+    - getAvailability (default !TODO)
