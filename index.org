@@ -1,29 +1,28 @@
-
 * Description
   The plugin adds incremental-reading-like mode to anki.
   Usage:
-  1. Add your texts to Texts subdeck
+  1. Add your texts 
      For each text you want to read add a new card to Texts subdeck as following:
      - "data" field: the text 
      - "source" field: the source of the text (e.g. url of the page the text from)
      ? Alternative way -- via menu 
 
-  2. Check unknown words in Filtering subdeck
-     ! TODO how to do the checking
+  2. Mark unknown words 
+     ! TODO how to do the marking 
      Select "Supply cards" from menu
 
-  3. Memoize filtered words in Memoizing subdeck
+  3. Memoize unknown words 
      This is just the regular anki use case.
 
   4. Read a text
-     Once you learned words good enough, select "Update available texts" from menu.
+     Once you learned words good enough, select "Update estimations" from menu.
      Now each text in Available subdeck are consisting of familiar words, go ahead!
 
 * Specification
   - Decks: 
     - Texts (data, source, availability)
     - Words (word, *text, context)
-    - Available (filter Texts: availability > AVAILABILITY_THRESHOLD)
+    - Available (filter Texts: availability > P_THRESHOLD)
     - Filtering (filter Words: no context && first time seen) 
     - Memoizing (filter Words: with context)
  
@@ -49,18 +48,65 @@
       │ plugin retreives translation/meaning for the word
       ├─if failed: 
       │ │ mark the card as failure
-      │ │ show message
-      │ │ stop the function
+      │ │ show message with choice (abort, ignore, fallback)
       │
       │ plugin updates context of the word to translation/meaning 
       │ end
 
-    - update available texts
-      │ plugin calculates availability for each text using getAvailability 
+    - update estimations 
+      │ plugin calculates availability for each text using P_ESTIMATE 
       │ plugin updates availability of the texts
       │ end
 
   - Parameters:
-    - global deck name (default SRead)
-    - AVAILABILITY_THRESHOLD (default !TODO)
-    - getAvailability (default !TODO)
+    - global deck name (P_DECK_GLOBAL)
+    - (preferred) translate funciton (P_TRANSLATE)
+    - estimate funciton (P_ESTIMATE)
+    - availability threshold (P_THRESHOLD)
+
+* Roadmap[0/3]
+
+- [ ] skeleton [0/15]
+  - [ ] (anki) create deck
+  - [ ] (anki) create subdeck
+  - [ ] (anki) add new model
+  - [ ] (main) init
+
+  - [ ] (anki) add card
+  - [ ] (anki) show dialog "Add a card"
+  - [ ] (3rdp) (!beta) parsing text 
+    just simple regexp
+  - [ ] (main) add_text 
+
+  - [ ] (anki) check what can be done with filtering
+  - [ ] (anki) (!beta) show dialog with message
+    for debug purposes and to notion when card can't be supplied
+  - [ ] (anki) direct access to db
+  - [ ] (3rdp) (!beta) translating
+    just placeholder
+  - [ ] (main) supply_cards
+
+  - [ ] (3rdp) (!beta) estimate 
+    just placeholder
+  - [ ] (main) update_estimates
+   
+- [ ] prototype [0/3]
+  - [ ] (anki) show dialog with message 
+    this time with abort/ignore/other options
+  - [ ] (3rdp) (!beta) translating
+    action/fallback choice
+
+  - [ ] (3rdp) (!beta) estimate 
+    slow version
+ 
+- [ ] release [0/5] 
+  - [ ] (3rdp) sqlite full text search
+  - [ ] (3rdp) estimate 
+
+  - [ ] (3rdp) parsing text
+    find good and fast solution, morphem-invariant would be great 
+
+  - [ ] (3rdp) translating
+    shell invocation
+  - [ ] (3rdp) translating
+    online translation
