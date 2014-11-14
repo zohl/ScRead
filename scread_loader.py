@@ -25,3 +25,4 @@ P_ESTIMATE = estimate.placeholder    # See scread/estimate.py for options
 P_THRESHOLD = 0.8
 
 init(P_DECK_GLOBAL, P_TRANSLATE, P_ESTIMATE, P_THRESHOLD)
+
