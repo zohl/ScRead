@@ -3,6 +3,7 @@
 from aqt import mw
 from aqt.utils import showInfo
 from aqt.qt import *
+from anki.hooks import addHook
 
 from scread.constants import *
 from scread import translate
@@ -11,7 +12,7 @@ from scread import estimate
 
 
 def init(deck_global, translate, estimate, threshold):
-    
+   
     def add_text():
         showInfo('adding to %s' % deck_global)
     
@@ -22,8 +23,7 @@ def init(deck_global, translate, estimate, threshold):
         showInfo('updating estimations')
     
     def test_item():
-        print(mw.form.menuTools)
-
+        pass
 
     def create_submenu():
         
@@ -42,8 +42,25 @@ def init(deck_global, translate, estimate, threshold):
             add_text
           , supply_cards
           , update_estimations
+          , test_item  
         ])
 
-    create_submenu()
+
+    def create_decks():
+        mw.col.decks.id(deck_global)
+        map(lambda s: mw.col.decks.id(deck_global + '::' + s), [
+          DECK_TEXTS
+        , DECK_WORDS
+        , DECK_AVALABLE
+        , DECK_FILTERING
+        , DECK_MEMOIZING
+        ])
+        mw.deckBrowser.refresh()
+
+
+    map(lambda f: addHook("profileLoaded", f), [
+      create_submenu
+    , create_decks
+    ])
 
 

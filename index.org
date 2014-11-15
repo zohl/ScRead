@@ -66,10 +66,10 @@
 
 * Roadmap[0/3]
 
-- [-] skeleton [1/16]
+- [-] skeleton [3/16]
   - [X] (anki) menu items
-  - [ ] (anki) create deck
-  - [ ] (anki) create subdeck
+  - [X] (anki) create deck
+  - [X] (anki) create subdeck
   - [ ] (anki) add new model
   - [ ] (main) init
 
