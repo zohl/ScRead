@@ -66,14 +66,16 @@
 
 * Roadmap[0/3]
 
-- [-] skeleton [3/16]
+- [-] skeleton [6/19]
   - [X] (anki) menu items
   - [X] (anki) create deck
   - [X] (anki) create subdeck
-  - [ ] (anki) add new model
-  - [ ] (main) init
+  - [X] (anki) dynamic decks
+  - [X] (anki) add new model
+  - [X] (main) init
 
   - [ ] (anki) add card
+  - [ ] (anki) config decks
   - [ ] (anki) show dialog "Add a card"
   - [ ] (3rdp) (!beta) parsing text 
     just simple regexp

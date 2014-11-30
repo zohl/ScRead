@@ -5,62 +5,89 @@ from aqt.utils import showInfo
 from aqt.qt import *
 from anki.hooks import addHook
 
-from scread.constants import *
-from scread import translate
-from scread import estimate
+from tools import drepr
+from scread import conf
 
 
-
-def init(deck_global, translate, estimate, threshold):
+def init():
    
     def add_text():
-        showInfo('adding to %s' % deck_global)
-    
+        showInfo('adding to ')
+
     def supply_cards():
         showInfo('suppying cards')
-    
+
     def update_estimations():
         showInfo('updating estimations')
-    
-    def test_item():
-        pass
 
-    def create_submenu():
-        
-        menuTools = mw.form.menuTools
-        menuTools.menuScRead = mw.form.menuTools.addMenu('ScRead')
-    
-        def beautify(fname):
-            return ' '.join([w.capitalize() for w in fname.split('_')])
+    def test():
+        dm = mw.col.decks
 
+
+    def create_menu():
+        mt = mw.form.menuTools
+        menu = mt.addMenu(conf.menu['name'])
+        setattr(mt, 'menu'+conf.menu['name'], menu)
+       
         def add_menu_item(f):
-            action = QAction(beautify(f.__name__), mw)
+            action = QAction(conf.menu['items'][f.__name__], mw)
             mw.connect(action, SIGNAL("triggered()"), f)
-            menuTools.menuScRead.addAction(action)
-
+            menu.addAction(action)
+        
         map(add_menu_item, [
-            add_text
-          , supply_cards
-          , update_estimations
-          , test_item  
+          add_text
+        , supply_cards
+        , update_estimations
+        , test
         ])
 
 
     def create_decks():
-        mw.col.decks.id(deck_global)
-        map(lambda s: mw.col.decks.id(deck_global + '::' + s), [
-          DECK_TEXTS
-        , DECK_WORDS
-        , DECK_AVALABLE
-        , DECK_FILTERING
-        , DECK_MEMOIZING
-        ])
+        dm = mw.col.decks
+        
+        def add_deck(deck):
+            if dm.byName(deck['name']) is not None:
+                return
+            
+            if 'conf' in deck and deck['conf'] is not None:
+                deck['type']['conf'] = dm.confId(deck['name'], deck['conf'])
+                
+            dm.id(deck['name'], type = deck['type'])
+        
+        map(add_deck, sorted(conf.decks.values(), key = lambda x: len(x['name'])))
         mw.deckBrowser.refresh()
 
 
+    def create_models():
+       
+        ms = mw.col.models
+       
+        def add_field(m, field):
+            f = ms.newField(field)
+            ms.addField(m, f)
+
+        def add_template(m, template):
+            t = ms.newTemplate(template['name'])
+            t['qfmt'] = template['qfmt']
+            t['afmt'] = template['afmt']
+            ms.addTemplate(m, t)
+
+
+        def add_model(model):
+            if ms.byName(model['name']) is not None:
+                return
+
+            m = ms.new(model['name'])
+            map(lambda field: add_field(m, field), model['fields'])
+            map(lambda template: add_template(m, template), model['templates'])
+
+            ms.add(m)
+        
+        map(add_model, conf.models.values())
+
+
     map(lambda f: addHook("profileLoaded", f), [
-      create_submenu
+      create_menu
     , create_decks
+    , create_models
     ])
-
-
