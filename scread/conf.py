@@ -42,7 +42,7 @@ make_filtered_deck = lambda name, conf: {
 
    
 
-#TODO proper configs
+#TODO check configs
 
 decks = {
     'global': make_deck(
@@ -64,8 +64,9 @@ decks = {
     ),
 
     'available': make_filtered_deck(
-          'ScRead::Texts::Available', {
-
+          'ScRead::Texts -> Available', {
+              'terms': [['deck:"ScRead::Texts" tag:"available"', 9999, 0]]
+              , 'delays': [1440*1, 1440*1000*2]
           }
     ),
 
@@ -80,92 +81,19 @@ decks = {
     ),
 
     'unsorted': make_filtered_deck(
-          'ScRead::Words::Unsorted', {
-
+          'ScRead::Words -> Unsorted', {
+              'terms': [['deck:"ScRead::Words" card:"Word.Unsorted"', 9999, 0]]
+            , 'delays': [1440*365*1000, 1440*365*100]
           }
     ),
 
     'filtered': make_filtered_deck(
-          'ScRead::Words::Filtered', {
-
+          'ScRead::Words -> Filtered', {
+              'terms': [['deck:"ScRead::Words" card:"Word.Filtered" tag:"visible"', 200, 0]]
           }
     )
 }
 
- 
-#sub = lambda s: (lambda self: self['global']['name'] + '::' + s)
-#
-#decks = unfold({
-#  'global': make_deck('ScRead', 'Global desk for ScRead. Do not edit this!', {
-#    'new': {'perDay': 9999}
-#  , 'rev': {'perDay': 9999}
-#  })
-#, 'texts': make_deck(sub('Texts'), 'All texts')
-#, 'words': make_deck(sub('Words'), 'All words')
-#
-#    
-# , 'words': {
-#     'name': make_name('Words')
-#   , 'type': make_type({
-#        'desc': "All words"
-#     })
-#   }
-#
-# , 'available': {
-#     'name': make_name('Available')
-#   , 'type': make_type({
-#        'desc': "Available texts"
-#     })
-#   , 'conf': make_conf({
-#       'name': 'ScRead: available'
-#     , 'maxTaken': 900
-#     , 'new': {
-#         'delays': [
-#            1440
-#         ,  2880
-#         ]
-#       , 'perDay': 100
-#     }
-#     , 'rev': {
-#         'perDay': 0
-#       }
-#     , 'timer': 0
-#     })
-#   }
-#
-# , 'filtering': {
-#     'name': make_name('Filtering')
-#   , 'type': make_type({
-#        'desc': "Here you chose words you don't know"
-#     })
-#   , 'conf': make_conf({
-#       'name': 'ScRead: filtering'
-#     , 'new': {
-#         'delays': [52560000]
-#       , 'perDay': 9999
-#       }
-#     , 'rev': {
-#         'perDay': 0
-#       }
-#     })
-#   }
-#
-# , 'memoizing': {
-#     'name': make_name('Memoizing')
-#   , 'type': make_type({
-#        'desc': "Here you memoize filtered words"
-#     })
-#   , 'conf': make_conf({
-#       'name': 'ScRead: memoize'
-#     , 'new': {
-#         'perDay': 20
-#       }
-#     , 'rev': {
-#         'perDay': 200
-#       }
-#     })
-#   }
-#})
 
 
 #TODO adequate formatting
@@ -173,33 +101,33 @@ decks = {
 models = {
     'text': {
         'name': 'ScRead.Text'
-        , 'fields': ['Text', 'Source']
-        , 'templates': [
-            {
-            'name': 'Default'
-            , 'qfmt': """
-              <p style="align: left">from: {{Source}}</p>
-              <pre>{{Text}}</pre>
-             """
-            , 'afmt': '--'
+        , 'fields': ['Text', 'Source', 'Availability']
+        , 'templates': {
+            'default': {
+                  'name': 'Text.Default'
+                , 'qfmt': """
+                <p style="align: left">from: {{Source}}</p>
+                <pre>{{Text}}</pre>
+                """
+                , 'afmt': '--'
             }
-        ]
+        }
     },
 
     'word': {
           'name': 'ScRead.Word'
-        , 'fields': ['Word', 'Meaning', 'Context']
-        , 'templates': [
-            {
-              'name': 'Unsoreted'
-            , 'qfmt': '{{Word}}'
-            , 'afmt': '--'
+        , 'fields': ['Word', 'TextId', 'Meaning', 'Context']
+        , 'templates': {
+            'unsorted': {
+                  'name': 'Word.Unsorted'
+                , 'qfmt': '{{Word}}'
+                , 'afmt': '--'
             },
-            {
-              'name': 'Filtered'
-            , 'qfmt': '{{Word}}'
-            , 'afmt': '{{Meaning}} | {{Context}}'
+            'filtered': {
+                  'name': 'Word.Filtered'
+                , 'qfmt': '{{Word}}'
+                , 'afmt': '{{Meaning}} | {{Context}}'
             }
-        ]
+        }
     }
 }

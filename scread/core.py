@@ -1,8 +1,11 @@
 """ core.py: provides init function for the plugin. """
 
 from aqt import mw
+from aqt import addcards
 from aqt.utils import showInfo
 from aqt.qt import *
+
+from anki.notes import Note
 from anki.hooks import addHook
 
 from tools import drepr
@@ -12,7 +15,15 @@ from scread import conf
 def init():
    
     def add_text():
-        showInfo('adding to ')
+        decks = mw.col.decks
+        models = mw.col.models
+
+        models.setCurrent(models.byName(conf.models['text']['name']))
+        decks.select(decks.byName(conf.decks['texts']['name'])['id'])
+        ac = addcards.AddCards(mw)
+
+        #TODO hook and parse
+
 
     def supply_cards():
         showInfo('suppying cards')
@@ -21,8 +32,16 @@ def init():
         showInfo('updating estimations')
 
     def test():
-        dm = mw.col.decks
-
+       
+        def add_note(model, fields):
+            deck = model + 's'
+            note = Note(mw.col, mw.col.models.byName(conf.models[model]['name']))
+            note.model()['did'] = mw.col.decks.id(conf.decks[deck]['name'])
+            note.fields = fields
+            mw.col.addNote(note)
+            
+        #map(lambda s: add_note('word', [s, '', '', ''])
+        #    , ['foo', 'bar', 'baz', 'quz', 'quux'])
 
     def create_menu():
         mt = mw.form.menuTools
@@ -79,8 +98,7 @@ def init():
 
             m = ms.new(model['name'])
             map(lambda field: add_field(m, field), model['fields'])
-            map(lambda template: add_template(m, template), model['templates'])
-
+            map(lambda template: add_template(m, template), model['templates'].values())
             ms.add(m)
         
         map(add_model, conf.models.values())
