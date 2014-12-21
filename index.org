@@ -22,9 +22,9 @@
   - Decks: 
     - Texts (data, source, availability)
     - Words (word, *text, context)
-    - Available (filter Texts: availability > P_THRESHOLD)
-    - Filtering (filter Words: no context && first time seen) 
-    - Memoizing (filter Words: with context)
+    - Available (filter Texts: with well known words only)
+    - Unsorted (filter Words: with no translation) 
+    - Filtered (filter Words: with translation)
  
   - Extra functions:
     - add text:
@@ -59,14 +59,13 @@
       │ end
 
   - Parameters:
-    - global deck name (P_DECK_GLOBAL)
+    - parse funciton (P_PARSE)
     - (preferred) translate funciton (P_TRANSLATE)
     - estimate funciton (P_ESTIMATE)
-    - availability threshold (P_THRESHOLD)
 
-* Roadmap[0/3]
+* Roadmap[1/3]
 
-- [-] skeleton [9/18]
+- [X] skeleton [18/18]
   - [X] (anki) menu items
   - [X] (anki) create deck
   - [X] (anki) create subdeck
@@ -77,21 +76,21 @@
   - [X] (anki) add card
   - [X] (anki) config decks
   - [X] (anki) show dialog "Add a card"
-  - [ ] (3rdp) (!beta) parsing text 
+  - [X] (3rdp) (!beta) parsing text 
     just simple regexp
-  - [ ] (main) add_text 
+  - [X] (main) parse_texts 
 
-  - [ ] (anki) check what can be done with filtering
-  - [ ] (anki) (!beta) show dialog with message
+  - [X] (anki) check what can be done with filtering
+  - [X] (anki) (!beta) show dialog with message
     for debug purposes and to notion when card can't be supplied
-  - [ ] (anki) direct access to db
-  - [ ] (3rdp) (!beta) translating
+  - [X] (anki) direct access to db
+  - [X] (3rdp) (!beta) translating
     just placeholder
-  - [ ] (main) supply_cards
+  - [X] (main) supply_cards
 
-  - [ ] (3rdp) (!beta) estimate 
+  - [X] (3rdp) (!beta) estimate 
     just placeholder
-  - [ ] (main) update_estimates
+  - [X] (main) update_estimates
    
 - [ ] prototype [0/3]
   - [ ] (anki) show dialog with message 
