@@ -63,7 +63,7 @@
     - (preferred) translate funciton (P_TRANSLATE)
     - estimate funciton (P_ESTIMATE)
 
-* Roadmap[1/3]
+* Roadmap[2/4]
 
 - [X] skeleton [18/18]
   - [X] (anki) menu items
@@ -92,13 +92,12 @@
     just placeholder
   - [X] (main) update_estimates
    
-- [ ] prototype [0/3]
-  - [ ] (anki) show dialog with message 
+- [X] prototype [3/3]
+  - [X] (anki) show dialog with message 
     this time with abort/ignore/other options
-  - [ ] (3rdp) (!beta) translating
+  - [X] (3rdp) (!beta) translating
     action/fallback choice
-
-  - [ ] (3rdp) (!beta) estimate 
+  - [X] (3rdp) (!beta) estimate 
     slow version
  
 - [ ] release [0/5] 
@@ -112,3 +111,7 @@
     shell invocation
   - [ ] (3rdp) translating
     online translation
+
+- [ ] bugs
+  - [ ] annotate params instead of specs
+  - [ ] duplicates?

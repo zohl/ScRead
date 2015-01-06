@@ -6,9 +6,45 @@ Specification:
 """
 
 def placeholder(words):
-    return (
-          map(lambda w: w + ' is a word or something like that', words)
-        , []
-    )
+    res = []
+    err = []
     
+    def f(word):
+        if not (word.startswith('a') or word.startswith('e')):
+            res.append('word ' + word + ' was successfuly translated')
+        else:
+            res.append(None)
+            err.append(word)
 
+    map(f, words)
+    return (res, err)
+
+
+def only_a(words):
+    res = []
+    err = []
+
+    def f(word):
+        if word.startswith('a'):
+            res.append('word ' + word + ' was successfuly translated')
+        else:
+            res.append(None)
+            err.append(word)
+
+    map(f, words)
+    return (res, err)
+
+
+def only_e(words):
+    res = []
+    err = []
+
+    def f(word):
+        if word.startswith('e'):
+            res.append('word ' + word + ' was successfuly translated')
+        else:
+            res.append(None)
+            err.append(word)
+
+    map(f, words)
+    return (res, err)

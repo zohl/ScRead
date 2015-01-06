@@ -2,7 +2,7 @@
 
 from aqt import mw
 from aqt import addcards
-from aqt.utils import showInfo, showWarning
+from aqt.utils import showInfo, showWarning, chooseList
 from aqt.qt import *
 from aqt.utils import tooltip
 
@@ -14,7 +14,7 @@ import re
 
 from tools import drepr
 from scread import conf
-
+from scread import translate
 
 def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
     
@@ -154,12 +154,29 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
        
 
         (ids, words) = zip(*notes)
-        (translated, err) = P_TRANSLATE(words)
         
-        if len(err) > 0:
-            showWarning("""
-              Some words cannot be translated: %s
-            """ % (', '.join(err)))
+        
+        (translated, err) = P_TRANSLATE(words)
+        choices = filter(lambda s: not s.startswith('_'), dir(translate))
+        msg = """Some words cannot be translated:\n  %s\n\nChoose alternative function:"""
+
+        while len(err) > 0:
+            res = chooseList(
+                re.sub('(.{50,80}) ', '\\1\n', msg % (', '.join(err)))
+              , map(lambda s: s.replace('_', ' '), choices))
+
+            p_translate_new = translate.__getattribute__(choices[res])
+
+            (translated_new, err_new) = p_translate_new(err)
+
+            i = 0
+            for j in range(len(err)):
+                while words[i] != err[j]:
+                    i += 1
+                if translated[i] is None:
+                    translated[i] = translated_new[j]
+
+            err = err_new
 
         map(lambda xs: update_note(*xs), zip(ids, translated))
 
