@@ -1,117 +1,22 @@
 * Description
-  The plugin adds incremental-reading-like mode to anki.
-  Usage:
-  1. Add your texts 
-     For each text you want to read add a new card to Texts subdeck as following:
-     - "data" field: the text 
-     - "source" field: the source of the text (e.g. url of the page the text from)
-     ? Alternative way -- via menu 
+  ! TODO
 
-  2. Mark unknown words 
-     ! TODO how to do the marking 
-     Select "Supply cards" from menu
+* Roadmap[0/3]
 
-  3. Memoize unknown words 
-     This is just the regular anki use case.
+  - [ ] explore [0/1]
+    - [ ] real (big) data speed processing [0/3]
+      - [ ] parser
+      - [ ] translation
+      - [ ] estimation
 
-  4. Read a text
-     Once you learned words good enough, select "Update estimations" from menu.
-     Now each text in Available subdeck are consisting of familiar words, go ahead!
+  - [ ] features [0/3]
+    - [ ] description/instructions
+    - [ ] parser
+    - [ ] online translation
 
-* Specification
-  - Decks: 
-    - Texts (data, source, availability)
-    - Words (word, *text, context)
-    - Available (filter Texts: with well known words only)
-    - Unsorted (filter Words: with no translation) 
-    - Filtered (filter Words: with translation)
- 
-  - Extra functions:
-    - add text:
-      │ anki run dialog "Add new card" to Texts
-      │ user provides data and source fields
-      │ anki adds card t = (data, source) to Texts deck
-      │ plugin parses text 
-      │ anki for each word adds a card (word, text -> t, NULL) to Words
-      ├─if already exists: 
-      │ │ skip the card 
-      │
-      │ end
-      
-    - supply cards:
-      │ for each card:
-      │
-      │ plugin checks whether card need to be memoized
-      ├─if not: 
-      │ │ skip the card 
-      │
-      │ plugin retreives translation/meaning for the word
-      ├─if failed: 
-      │ │ mark the card as failure
-      │ │ show message with choice (abort, ignore, fallback)
-      │
-      │ plugin updates context of the word to translation/meaning 
-      │ end
+  - [ ] fixes [0/2]
+    - [ ] annotate params instead of specs
+    - [ ] duplicates
 
-    - update estimations 
-      │ plugin calculates availability for each text using P_ESTIMATE 
-      │ plugin updates availability of the texts
-      │ end
 
-  - Parameters:
-    - parse funciton (P_PARSE)
-    - (preferred) translate funciton (P_TRANSLATE)
-    - estimate funciton (P_ESTIMATE)
 
-* Roadmap[2/4]
-
-- [X] skeleton [18/18]
-  - [X] (anki) menu items
-  - [X] (anki) create deck
-  - [X] (anki) create subdeck
-  - [X] (anki) dynamic decks
-  - [X] (anki) add new model
-  - [X] (main) init
-
-  - [X] (anki) add card
-  - [X] (anki) config decks
-  - [X] (anki) show dialog "Add a card"
-  - [X] (3rdp) (!beta) parsing text 
-    just simple regexp
-  - [X] (main) parse_texts 
-
-  - [X] (anki) check what can be done with filtering
-  - [X] (anki) (!beta) show dialog with message
-    for debug purposes and to notion when card can't be supplied
-  - [X] (anki) direct access to db
-  - [X] (3rdp) (!beta) translating
-    just placeholder
-  - [X] (main) supply_cards
-
-  - [X] (3rdp) (!beta) estimate 
-    just placeholder
-  - [X] (main) update_estimates
-   
-- [X] prototype [3/3]
-  - [X] (anki) show dialog with message 
-    this time with abort/ignore/other options
-  - [X] (3rdp) (!beta) translating
-    action/fallback choice
-  - [X] (3rdp) (!beta) estimate 
-    slow version
- 
-- [ ] release [0/5] 
-  - [ ] (3rdp) sqlite full text search
-  - [ ] (3rdp) estimate 
-
-  - [ ] (3rdp) parsing text
-    find good and fast solution, morphem-invariant would be great 
-
-  - [ ] (3rdp) translating
-    shell invocation
-  - [ ] (3rdp) translating
-    online translation
-
-- [ ] bugs
-  - [ ] annotate params instead of specs
-  - [ ] duplicates?

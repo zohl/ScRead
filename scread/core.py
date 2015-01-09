@@ -157,7 +157,10 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
         
         
         (translated, err) = P_TRANSLATE(words)
-        choices = filter(lambda s: not s.startswith('_'), dir(translate))
+        choices = filter(lambda s:
+              (hasattr(translate.__getattribute__(s), '__call__')) and not s.startswith('_')
+            , dir(translate))
+
         msg = """Some words cannot be translated:\n  %s\n\nChoose alternative function:"""
 
         while len(err) > 0:
