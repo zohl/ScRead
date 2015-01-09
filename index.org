@@ -9,10 +9,10 @@
       - [ ] translation
       - [ ] estimation
 
-  - [ ] features [0/3]
+  - [-] features [1/3]
     - [ ] description/instructions
     - [ ] parser
-    - [ ] online translation
+    - [X] online translation
 
   - [ ] fixes [0/2]
     - [ ] annotate params instead of specs
@@ -20,3 +20,4 @@
 
 
 
+  

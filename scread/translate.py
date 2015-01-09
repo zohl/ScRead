@@ -8,8 +8,7 @@ Specification:
 """
 
 import subprocess 
-import urllib
-
+from tools import drepr
 
 def ignore(words):
     n = len(words)
@@ -30,11 +29,10 @@ def sdcv(words):
         fmt_entry = lambda s: '<p align=left>'+s+'</p>'
 
         fmt = map(lambda s: fmt_entry(s) if (s.startswith(' ')) else fmt_header(s), raw) 
-        result = ''.join(fmt)
+        result = (''.join(fmt)).decode('utf-8')
         
         if len(result) > 0:
             res.append(result)
-            print result + '\n\n\n'
         else:
             res.append(None)
             err.append(word)
@@ -43,4 +41,32 @@ def sdcv(words):
     return (res, err)
    
  
+
+def trans(words):
+
+    res = []
+    err = []
+
+    def process_word(word):
+        raw = filter(
+              lambda s: len(s) > 0 and not (s.startswith('        '))
+            , (subprocess.check_output(['trans', '-no-ansi', '-t', 'ru', word])))
+
+        fmt_header = lambda s: '<p>'+s+'</p>'
+        fmt_entry = lambda s: '<p align=left>'+s+'</p>'
+
+        fmt = map(
+            lambda s: fmt_entry(s) if (s.startswith(' ')) else fmt_header(s)
+            , raw.split('\n')[5:]) 
+        
+        result = (''.join(fmt)).decode('utf-8')
+        
+        if len(result) > 0:
+            res.append(result)
+        else:
+            res.append(None)
+            err.append(word)
+  
+    map(process_word, words)
+    return (res, err)
 

@@ -18,7 +18,7 @@ __status__ = "Prototype"
 
 # Parameters
 P_PARSE = parse.placeholder          # See scread/parse.py for options
-P_TRANSLATE = translate.placeholder  # See scread/translate.py for options
+P_TRANSLATE = translate.sdcv         # See scread/translate.py for options
 P_ESTIMATE = estimate.placeholder    # See scread/estimate.py for options
 
 init(P_PARSE, P_TRANSLATE, P_ESTIMATE)
