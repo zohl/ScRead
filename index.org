@@ -3,21 +3,29 @@
 
 * Roadmap[0/3]
 
-  - [ ] explore [0/1]
-    - [ ] real (big) data speed processing [0/3]
-      - [ ] parser
-      - [ ] translation
+  - [-] explore [0/1]
+    - [-] real (big) data speed processing [2/3]
+      - [X] parser
+      - [X] translation
       - [ ] estimation
 
-  - [-] features [1/3]
-    - [ ] description/instructions
-    - [ ] parser
+  - [-] features [2/3]
+    - [ ] manual 
+      - [ ] decks descriptions
+      - [ ] howto
+
+    - [X] parser
     - [X] online translation
 
-  - [ ] fixes [0/2]
-    - [ ] annotate params instead of specs
-    - [ ] duplicates
-
+  - [-] fixes [2/5]
+    - [X] annotate params instead of specs
+    - [X] duplicates
+    - [ ] notification before big amount of work
+    - [ ] list of functions
+    - [ ] design [0/2]
+      - [ ] text
+      - [ ] word
+      
 
 
   

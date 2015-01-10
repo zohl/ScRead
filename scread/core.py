@@ -16,6 +16,7 @@ from tools import drepr
 from scread import conf
 from scread import translate
 
+
 def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
     
     get_model = lambda model: mw.col.models.byName(conf.models[model]['name'])
@@ -42,6 +43,7 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
         note = mw.col.getNote(text_id)
         text = re.sub(r'<[^>]*>', '', note.fields[fld_text])
         return text
+
 
     def parse_texts():
         
@@ -85,8 +87,6 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
             map(lambda word: add_note(word, text_id), new)
             map(update_note, nfo.iteritems()) 
 
-            note.addTag(conf.tags['parsed'])
-            note.flush()
 
         text_ids = mw.col.db.list("""
         select id
@@ -97,7 +97,8 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
         """ % (conf.tags['parsed'], model_text['id']))
 
         map(process_text, text_ids)
-       
+        mw.col.tags.bulkAdd(text_ids, conf.tags['parsed'])
+
         # move decent cards to words::unsorted
         db.execute("""
         update cards set

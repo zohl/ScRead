@@ -17,7 +17,7 @@ __email__ = "zohl@fmap.me"
 __status__ = "Prototype"
 
 # Parameters
-P_PARSE = parse.placeholder          # See scread/parse.py for options
+P_PARSE = parse.default              # See scread/parse.py for options
 P_TRANSLATE = translate.sdcv         # See scread/translate.py for options
 P_ESTIMATE = estimate.placeholder    # See scread/estimate.py for options
 
