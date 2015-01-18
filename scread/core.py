@@ -2,13 +2,14 @@
 
 from aqt import mw
 from aqt import addcards
-from aqt.utils import showInfo, showWarning, chooseList
+from aqt.utils import showInfo, showWarning, chooseList, askUser, tooltip, closeTooltip
 from aqt.qt import *
-from aqt.utils import tooltip
 
 from anki.utils import intTime
 from anki.hooks import addHook, _hooks
 from anki.notes import Note
+
+from PyQt4 import QtGui
 
 import re
 
@@ -29,20 +30,23 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
         return filter(predicate, get_model(model)['tmpls'])[0]['ord']
 
 
-    def rebuild_decks():
-        is_dynamic = lambda deck: (deck['type']['dyn'] == 1)
-        get_id = lambda deck: mw.col.decks.byName(deck['name'])['id']
-        rebuild = lambda deck_id: mw.col.sched.rebuildDyn(deck_id)
-
-        #map(rebuild, map(get_id, filter(is_dynamic, conf.decks.values())))
-        mw.reset()
-
-
     def get_text(text_id):
         fld_text = get_field('text', 'Text')
         note = mw.col.getNote(text_id)
         text = re.sub(r'<[^>]*>', '', note.fields[fld_text])
         return text
+
+
+    def run_with_warning(f):
+        tooltip("Operation has been started, it may take some time. Please, be patient.")
+        QtGui.qApp.processEvents()
+        
+        result = f()
+
+        closeTooltip()
+        tooltip("Done!")
+        
+        return result
 
 
     def parse_texts():
@@ -70,47 +74,54 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
             mw.col.addNote(note)
 
         def update_note((word, (count, context))):
-            note_id = db.scalar('select id from notes where sfld=\'%s\'' % word)
+            note_id = db.scalar("""
+            select id
+            from notes
+            where
+                sfld=?
+            and mid=%s
+            """ % model_word['id'], word)
             note = mw.col.getNote(note_id)
             note.fields[fld_count] = str(int(note.fields[fld_count]) + count)
             note.fields[fld_context] = note.fields[fld_context] + context
             note.flush()
 
         def process_text(text_id):
-            dictionary = db.list("""
+            dictionary = map(str, db.list("""
             select sfld
             from notes
-            where mid = %s""" % model_word['id'])
-
+            where mid = ?""", model_word['id']))
+            
             (new, nfo) = P_PARSE(get_text(text_id), dictionary) 
             
             map(lambda word: add_note(word, text_id), new)
             map(update_note, nfo.iteritems()) 
 
 
-        text_ids = mw.col.db.list("""
-        select id
-        from notes
-        where
-            tags not like "%%%s%%"
-        and mid = %s
-        """ % (conf.tags['parsed'], model_text['id']))
+        def main():    
+            text_ids = mw.col.db.list("""
+            select id
+            from notes
+            where
+                tags not like "%%%s%%"
+            and mid = %s
+            """ % (conf.tags['parsed'], model_text['id']))
 
-        map(process_text, text_ids)
-        mw.col.tags.bulkAdd(text_ids, conf.tags['parsed'])
 
-        # move decent cards to words::unsorted
-        db.execute("""
-        update cards set
-          did = ? 
-        where
-            did = ? 
-        and ord = ? 
-        """, deck_unsorted, deck_words, tmpl_unsorted)
+            map(process_text, text_ids)
+            mw.col.tags.bulkAdd(text_ids, conf.tags['parsed'])
 
-        rebuild_decks()
-        tooltip("Done!")
+            # move decent cards to words::unsorted
+            db.execute("""
+            update cards set
+              did = ? 
+            where
+                did = ? 
+            and ord = ? 
+            """, deck_unsorted, deck_words, tmpl_unsorted)
 
+        run_with_warning(main)
+        mw.reset()
 
         
     def supply_cards():
@@ -144,46 +155,48 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
         and c.nid = n.id
         """ % deck_unsorted)
 
-        if len(notes) == 0:
-            return
 
-        def update_note(note_id, meaning):
-            note = mw.col.getNote(note_id)
-            note.fields[fld_meaning] = meaning
-            note.addTag(conf.tags['visible'])
-            note.flush()
-       
+        def translate_notes():
 
-        (ids, words) = zip(*notes)
-        
-        
-        (translated, err) = P_TRANSLATE(words)
-        choices = filter(lambda s:
-              (hasattr(translate.__getattribute__(s), '__call__')) and not s.startswith('_')
-            , dir(translate))
+          def update_note(note_id, meaning):
+              note = mw.col.getNote(note_id)
+              note.fields[fld_meaning] = meaning
+              note.addTag(conf.tags['visible'])
+              note.flush()
 
-        msg = """Some words cannot be translated:\n  %s\n\nChoose alternative function:"""
+          (ids, words) = zip(*notes)
+          
+          (translated, err) = run_with_warning(lambda: P_TRANSLATE(words))
 
-        while len(err) > 0:
-            res = chooseList(
-                re.sub('(.{50,80}) ', '\\1\n', msg % (', '.join(err)))
-              , map(lambda s: s.replace('_', ' '), choices))
+          choices = filter(lambda s:
+                (hasattr(translate.__getattribute__(s), '__call__')) and not s.startswith('_')
+              , dir(translate))
 
-            p_translate_new = translate.__getattribute__(choices[res])
+          msg = """Some words cannot be translated:\n  %s\n\nChoose alternative function:"""
 
-            (translated_new, err_new) = p_translate_new(err)
+          while len(err) > 0:
+              res = chooseList(
+                  re.sub('(.{50,80}) ', '\\1\n', msg % (', '.join(err)))
+                , map(lambda s: s.replace('_', ' '), choices))
 
-            i = 0
-            for j in range(len(err)):
-                while words[i] != err[j]:
-                    i += 1
-                if translated[i] is None:
-                    translated[i] = translated_new[j]
+              p_translate_new = translate.__getattribute__(choices[res])
 
-            err = err_new
+              (translated_new, err_new) = run_with_warning(lambda: p_translate_new(err))
 
-        map(lambda xs: update_note(*xs), zip(ids, translated))
+              i = 0
+              for j in range(len(err)):
+                  while words[i] != err[j]:
+                      i += 1
+                  if translated[i] is None:
+                      translated[i] = translated_new[j]
 
+              err = err_new
+
+          map(lambda xs: update_note(*xs), zip(ids, translated))
+
+
+        if len(notes) > 0:
+            translate_notes()
 
         # suspend checked cards
         db.execute("""
@@ -193,7 +206,8 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
         , usn = ?
         where
             did = ?
-        and queue > 0
+        and queue != 0
+        and queue != -1
         """, intTime(), mw.col.usn(), deck_unsorted)
 
         # move decent cards to words::filtered
@@ -217,8 +231,7 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
         """ % conf.tags['visible']
                    , intTime(), mw.col.usn(), deck_filtered, tmpl_filtered, deck_words)
 
-        rebuild_decks()
-        tooltip("Done!")
+        mw.reset()
 
 
     def update_estimations():
@@ -240,10 +253,8 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
         ivl_mature_threshold = 21
         
         text_ids = mw.col.db.list("""
-        select
-          id
-        from
-          notes
+        select id
+        from notes
         where
             tags like "%%%s%%"
         and tags not like "%%%s%%"
@@ -274,7 +285,8 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
             , tmpl_unsorted
             , tmpl_filtered))
 
-        availability = P_ESTIMATE(map(get_text, text_ids), dict(words))
+        availability = run_with_warning(
+            lambda: P_ESTIMATE(map(get_text, text_ids), dict(words)))
        
         fst = lambda (a, b): a
         snd = lambda (a, b): b
@@ -297,8 +309,85 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
         )
         """ % conf.tags['available'], deck_available, deck_texts)
 
-        rebuild_decks()
-        tooltip("Done!")
+        mw.reset()
+
+
+
+    def init():
+
+        def create_decks():
+            dm = mw.col.decks
+
+            def add_deck(deck):
+                if dm.byName(deck['name']) is not None:
+                    return
+
+                if 'conf' in deck and deck['conf'] is not None:
+                    deck['type']['conf'] = dm.confId(deck['name'], deck['conf'])
+
+                dm.id(deck['name'], type = deck['type'])
+
+            map(add_deck, sorted(conf.decks.values(), key = lambda x: len(x['name'])))
+            mw.deckBrowser.refresh()
+
+
+        def create_models():
+
+            ms = mw.col.models
+
+            def add_field(m, field):
+                f = ms.newField(field)
+                ms.addField(m, f)
+
+            def add_template(m, template):
+                t = ms.newTemplate(template['name'])
+                t['qfmt'] = template['qfmt']
+                t['afmt'] = template['afmt']
+                ms.addTemplate(m, t)
+
+
+            def add_model(model):
+                if ms.byName(model['name']) is not None:
+                    return
+
+                m = ms.new(model['name'])
+                map(lambda field: add_field(m, field), model['fields'])
+                map(lambda template: add_template(m, template), model['templates'].values())
+                m['css'] = ('css' in model and model['css']) or ''
+                ms.add(m)
+
+
+            map(add_model, conf.models.values())
+
+
+        def create_tags():
+            mw.col.tags.register(conf.tags.values())
+
+        create_decks()
+        create_models()
+        create_tags()
+        
+
+        
+    def drop():
+        dm = mw.col.decks
+        if get_deck('global') is not None:
+            dm.rem(get_deck('global'), childrenToo=True, cardsToo=True)
+            
+        ms = mw.col.models
+        def rem_model(m):
+            model = get_model(m) 
+            if model is not None:
+                ms.rem(model)
+
+        map(rem_model, conf.models.keys())
+
+
+    def reset():
+        #!TODO Confirmation
+        if askUser('Reset your ScRead decks?', defaultno=True):
+            drop()
+            init()
 
 
     def create_menu():
@@ -312,62 +401,12 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
             menu.addAction(action)
         
         map(add_menu_item, [
-          parse_texts
+          init
+        , reset
+        , parse_texts
         , supply_cards
         , update_estimations
         ])
 
 
-    def create_decks():
-        dm = mw.col.decks
-        
-        def add_deck(deck):
-            if dm.byName(deck['name']) is not None:
-                return
-            
-            if 'conf' in deck and deck['conf'] is not None:
-                deck['type']['conf'] = dm.confId(deck['name'], deck['conf'])
-                
-            dm.id(deck['name'], type = deck['type'])
-        
-        map(add_deck, sorted(conf.decks.values(), key = lambda x: len(x['name'])))
-        mw.deckBrowser.refresh()
-
-
-    def create_models():
-       
-        ms = mw.col.models
-       
-        def add_field(m, field):
-            f = ms.newField(field)
-            ms.addField(m, f)
-
-        def add_template(m, template):
-            t = ms.newTemplate(template['name'])
-            t['qfmt'] = template['qfmt']
-            t['afmt'] = template['afmt']
-            ms.addTemplate(m, t)
-
-
-        def add_model(model):
-            if ms.byName(model['name']) is not None:
-                return
-
-            m = ms.new(model['name'])
-            map(lambda field: add_field(m, field), model['fields'])
-            map(lambda template: add_template(m, template), model['templates'].values())
-            ms.add(m)
-        
-        map(add_model, conf.models.values())
-
-   
-    def create_tags():
-        mw.col.tags.register(conf.tags.values())
-
-        
-    map(lambda f: addHook('profileLoaded', f), [
-      create_menu
-    , create_decks
-    , create_models
-    , create_tags
-    ])
+    map(lambda f: addHook('profileLoaded', f), [create_menu])

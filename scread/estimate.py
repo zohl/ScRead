@@ -6,16 +6,22 @@ Specification:
 """
 
 import re
+from porter import stem
+from tools import drepr
 
-def placeholder(texts, estimations):
+def with_porter_stemming(texts, estimations):
+    
+    stem_estim = dict(map(lambda (w, e): (stem(str(w)), e), estimations.iteritems()))
 
     def estimate_text(text):
-        res = 1
         words = re.findall(r"[\w']+", text)
-
-        for word in words:
-            res = res * estimations[word]
+        cnts = {}
         
+        for w in words:
+            st = stem(w)
+            cnts[st] = 1 + ((st in cnts and cnts[st]) or 0)
+
+        res = reduce(lambda x, (st, cnt): x*(stem_estim[st]**cnt), cnts.iteritems(), 1)
         return (res > 0.5)
 
     return map(estimate_text, texts)

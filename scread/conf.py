@@ -11,7 +11,9 @@ beautify = lambda s: ' '.join(map(str.capitalize, s.split('_')))
 menu = {
   'name': 'ScRead'
   , 'items': {s:beautify(s) for s in [
-      'parse_texts'
+      'init'
+    , 'reset'
+    , 'parse_texts'
     , 'supply_cards'
     , 'update_estimations'
     , 'test'
@@ -24,33 +26,94 @@ menu = {
 
 models = {
     'text': {
-        'name': 'ScRead.Text'
+          'name': 'ScRead.Text'
+        , 'css': """
+        
+        .card {
+          font-family: arial;
+          font-size: 14px;
+          text-align: left;
+        }
+
+        .from {
+          text-align: left;
+          padding-top: 2em;
+        }
+        """
         , 'fields': ['Source', 'Text']
         , 'templates': {
             'default': {
                   'name': 'Text.Default'
                 , 'qfmt': """
-                <p style="align: left">from: {{Source}}</p>
-                <pre>{{Text}}</pre>
+                {{Text}}
+                <p class="from">From: <span>{{Source}}</span></p>
                 """
-                , 'afmt': '--'
+                , 'afmt': """
+                  {{FrontSide}}
+                  <hr/>
+                  --
+                """ 
             }
         }
     },
 
     'word': {
           'name': 'ScRead.Word'
+        , 'css': """
+        .card {
+          font-family: arial;
+          font-size: 14px;
+          text-align: left;
+        }
+
+        .word {
+          font-size: 20px;
+          text-align: center;
+        }
+
+        .context {
+          font-size: 14px;
+          text-align: left;
+        }
+        
+        .context .hl {
+          font-weight: bold;
+        }
+
+        .meaning .header {
+          text-align: left;
+          font-weight: bold;
+        }
+        
+        .meaning .entry {
+          text-align: left;
+        }
+        """
         , 'fields': ['Word', 'TextId', 'Count', 'Meaning', 'Context']
         , 'templates': {
             'unsorted': {
                   'name': 'Word.Unsorted'
-                , 'qfmt': '{{Word}}'
-                , 'afmt': '{{Word}}'
+                , 'qfmt': """
+                     <p class = "word">{{Word}}</p>
+                     <p class = "context">{{Context}}</p>
+                  """
+                , 'afmt': """
+                     {{FrontSide}} 
+                     <hr/>
+                     --
+                  """
             },
             'filtered': {
                   'name': 'Word.Filtered'
-                , 'qfmt': '{{Word}}'
-                , 'afmt': '{{Meaning}} | {{Context}}'
+                , 'qfmt': """
+                     <p class = "word">{{Word}}</p>
+                     <p class = "context">{{Context}}</p>
+                  """
+                , 'afmt': """
+                     {{FrontSide}}
+                     <hr/>
+                     <div class = "meaning">{{Meaning}}</div>
+                  """
             }
         }
     }
@@ -63,7 +126,6 @@ tags = {
   , 'visible': 'ScRead.visible'
 }   
 
-#TODO check configs
 
 make_deck = lambda name, description, conf = None: {
     'name': name
@@ -75,7 +137,7 @@ make_deck = lambda name, description, conf = None: {
 decks = {
     'global': make_deck(
           'ScRead'
-        , """Global deck for ScRead. There is nothing to do with this deck."""
+        , """Global deck for ScRead. A system deck (don't touch it)."""
         , {
               'new': {'perDay': 9999}
             , 'rev': {'perDay': 9999}
@@ -107,7 +169,7 @@ decks = {
 
     'words': make_deck(
           'ScRead::Words'
-        , """All words"""
+        , """All words. A system deck (don't touch it)."""
         , {
               'new': {'perDay': 0}
             , 'rev': {'perDay': 0}
@@ -116,7 +178,7 @@ decks = {
 
     'unsorted': make_deck(
           'ScRead::Words -> Unsorted'
-        , """Unsorted words."""
+        , """Unsorted words. Here you check the words you don't know."""
         , {
               'new': {
                   'perDay': 9999
@@ -129,7 +191,7 @@ decks = {
 
     'filtered': make_deck(
           'ScRead::Words -> Filtered'
-        , """Filtered words."""
+        , """Filtered words. Here you memoize the words."""
         , {
               'new': {'perDay': 25}
             , 'rev': {'perDay': 250}

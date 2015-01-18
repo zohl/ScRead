@@ -13,11 +13,7 @@ from porter import stem
 import re
 
 
-def default(text, dictionary):
-    """ Features:
-          - detects similar words
-          - context is the first sentence with the word
-    """
+def with_porter_stemming(text, dictionary):
 
     sentence = r'(^|[^;.!?]*[\W])%s([\W][^;.!?]*|$)'
     
@@ -36,7 +32,7 @@ def default(text, dictionary):
             res[st]['count'] = 0
           
             m = re.search(sentence % w, text)
-            res[st]['context'] = m.group(1) + '<strong>' + w + '</strong>' + m.group(2)
+            res[st]['context'] = '<p class = "context">' + m.group(1) + '<span class = "hl">' + w + '</span>' + m.group(2) +'</p>'
 
             if st not in stems:
                 new.append(w)

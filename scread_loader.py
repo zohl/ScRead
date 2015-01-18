@@ -14,12 +14,12 @@ __license__ = "GPL"
 __version__ = "0.0.1"
 __maintainer__ = "Al Zohali"
 __email__ = "zohl@fmap.me"
-__status__ = "Prototype"
+__status__ = "Development"
 
 # Parameters
-P_PARSE = parse.default              # See scread/parse.py for options
-P_TRANSLATE = translate.sdcv         # See scread/translate.py for options
-P_ESTIMATE = estimate.placeholder    # See scread/estimate.py for options
+P_PARSE = parse.with_porter_stemming       # See scread/parse.py for options
+P_TRANSLATE = translate.sdcv               # See scread/translate.py for options
+P_ESTIMATE = estimate.with_porter_stemming # See scread/estimate.py for options
 
 init(P_PARSE, P_TRANSLATE, P_ESTIMATE)
 

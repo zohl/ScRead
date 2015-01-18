@@ -10,7 +10,6 @@ Format of a visible function:
 """
 
 import subprocess 
-from tools import drepr
 
 
 def ignore(words):
@@ -27,13 +26,12 @@ def sdcv(words):
     err = []
 
     def process_word(word):
-        print word
         raw = filter(
               lambda s: len(s) > 0 and not (s.startswith('-->'))
             , (subprocess.check_output(['sdcv', '-n', str(word)])).split('\n')[1:])
 
-        fmt_header = lambda s: '<p>'+s+'</p>'
-        fmt_entry = lambda s: '<p align=left>'+s+'</p>'
+        fmt_header = lambda s: '<p class = "header">'+s+'</p>'
+        fmt_entry = lambda s: '<p class = "entry">'+s+'</p>'
 
         fmt = map(lambda s: fmt_entry(s) if (s.startswith(' ')) else fmt_header(s), raw) 
         result = (''.join(fmt)).decode('utf-8')
@@ -60,8 +58,8 @@ def trans(words):
               lambda s: len(s) > 0 and not (s.startswith('        '))
             , (subprocess.check_output(['trans', '-no-ansi', '-t', 'ru', str(word)])))
 
-        fmt_header = lambda s: '<p>'+s+'</p>'
-        fmt_entry = lambda s: '<p align=left>'+s+'</p>'
+        fmt_header = lambda s: '<p class = "header">'+s+'</p>'
+        fmt_entry = lambda s: '<p class = "entry">'+s+'</p>'
 
         fmt = map(
             lambda s: fmt_entry(s) if (s.startswith(' ')) else fmt_header(s)
