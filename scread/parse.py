@@ -9,42 +9,58 @@ Format of a function:
 
 from scread import conf
 from porter import stem
+from style import fmt_context, fmt_highlight
+from tools import drepr
+
+from anki.utils import stripHTML
 
 import re
 
 
+def _remove_camel_case(text):
+    text = re.sub(r'([a-z])([A-Z])', '\\1 \\2', text)
+    text = re.sub(r'([0-9])([a-zA-Z])', '\\1 \\2', text)
+    return text
+
+def _is_bad(word):
+    return re.match('^[0-9]+', word) is not None;
+
+
 def with_porter_stemming(text, dictionary):
 
-    sentence = r'(^|[^;.!?]*[\W])%s([\W][^;.!?]*|$)'
+    text = _remove_camel_case(stripHTML(text))
     
-    stems = map(stem, dictionary)
-    words = re.findall(r"[\w']+", text)
+    stems = dict(map(lambda w: (stem(w), w), dictionary))
     new = []
     res = {}
 
+    sentences = re.finditer(r'[^?!.;]+[?!.;]?\n?', text)
+   
+    for match in sentences:
+        sentence = match.group(0)
+        
+        words = re.finditer(r"[\w]+", sentence)
+        for match in words:
+            word = match.group(0).lower()
+            if _is_bad(word):
+                continue
 
-    for w in words:
-        st = stem(w)
-
-        if st not in res:
-            res[st] = {}
-
-            res[st]['count'] = 0
-          
-            m = re.search(sentence % w, text)
-            res[st]['context'] = '<p class = "context">' + m.group(1) + '<span class = "hl">' + w + '</span>' + m.group(2) +'</p>'
-
+            st = stem(word)
             if st not in stems:
-                new.append(w)
-                res[st]['word'] = w
+                new.append(word)
+                context = re.sub(
+                      r'(^|[^\w])(%s)([^\w]|$)' % match.group(0)
+                    , '\\1' + fmt_highlight('\\2') + '\\3'
+                    , sentence, flags=re.IGNORECASE)
+                res[word] = (1, fmt_context(context))
+
+                stems[st] = word
             else:
-                res[st]['word'] = dictionary[stems.index(st)]       
-
-
-        res[st]['count'] += 1
-
-    fmt = lambda x: (x['word'], (x['count'], x['context']))
-    return (new, (dict(map(fmt, res.values()))))
-
-    
+                w0 = stems[st]
+                if w0 in res:
+                    (count, context) = res[w0]
+                    res[stems[st]] = (count+1, context)
+                else:
+                    res[w0] = (1, '')
+    return (new, res)
 

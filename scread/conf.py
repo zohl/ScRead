@@ -1,8 +1,11 @@
+# -*- coding: utf-8 -*-
+
 """ conf.py: provides configuration variables for plugin. """
 
 
 from anki.decks import defaultDeck, defaultConf
 
+from style import css, templates
 from tools import *
 
 
@@ -14,6 +17,8 @@ menu = {
       'init'
     , 'reset'
     , 'parse_texts'
+    , 'mark_as_known'
+    , 'mark_as_new'
     , 'supply_cards'
     , 'update_estimations'
     , 'test'
@@ -22,100 +27,24 @@ menu = {
 
 
 
-#TODO adequate formatting
+make_templates = lambda m, xs: dict(map(
+      lambda x: (x, merge(templates[m+'.'+x], {'name': m.capitalize()+'.'+x.capitalize()}))
+    , xs))
+
 
 models = {
     'text': {
           'name': 'ScRead.Text'
-        , 'css': """
-        
-        .card {
-          font-family: arial;
-          font-size: 14px;
-          text-align: left;
-        }
-
-        .from {
-          text-align: left;
-          padding-top: 2em;
-        }
-        """
+        , 'css': css['text']
         , 'fields': ['Source', 'Text']
-        , 'templates': {
-            'default': {
-                  'name': 'Text.Default'
-                , 'qfmt': """
-                {{Text}}
-                <p class="from">From: <span>{{Source}}</span></p>
-                """
-                , 'afmt': """
-                  {{FrontSide}}
-                  <hr/>
-                  --
-                """ 
-            }
-        }
+        , 'templates': make_templates('text', ['default'])
     },
 
     'word': {
           'name': 'ScRead.Word'
-        , 'css': """
-        .card {
-          font-family: arial;
-          font-size: 14px;
-          text-align: left;
-        }
-
-        .word {
-          font-size: 20px;
-          text-align: center;
-        }
-
-        .context {
-          font-size: 14px;
-          text-align: left;
-        }
-        
-        .context .hl {
-          font-weight: bold;
-        }
-
-        .meaning .header {
-          text-align: left;
-          font-weight: bold;
-        }
-        
-        .meaning .entry {
-          text-align: left;
-        }
-        """
+        , 'css': css['word']
         , 'fields': ['Word', 'TextId', 'Count', 'Meaning', 'Context']
-        , 'templates': {
-            'unsorted': {
-                  'name': 'Word.Unsorted'
-                , 'qfmt': """
-                     <p class = "word">{{Word}}</p>
-                     <p class = "context">{{Context}}</p>
-                  """
-                , 'afmt': """
-                     {{FrontSide}} 
-                     <hr/>
-                     --
-                  """
-            },
-            'filtered': {
-                  'name': 'Word.Filtered'
-                , 'qfmt': """
-                     <p class = "word">{{Word}}</p>
-                     <p class = "context">{{Context}}</p>
-                  """
-                , 'afmt': """
-                     {{FrontSide}}
-                     <hr/>
-                     <div class = "meaning">{{Meaning}}</div>
-                  """
-            }
-        }
+        , 'templates': make_templates('word', ['unsorted', 'filtered'])
     }
 }
 
@@ -125,6 +54,10 @@ tags = {
   , 'available': 'ScRead.available'
   , 'visible': 'ScRead.visible'
 }   
+
+
+
+due_threshold = 1000
 
 
 make_deck = lambda name, description, conf = None: {
@@ -154,7 +87,7 @@ decks = {
     ),
 
     'available': make_deck(
-          'ScRead::Texts -> Available'
+          u'ScRead::Texts→Available'
         , """Available texts."""
         , {
               'new': {
@@ -166,7 +99,6 @@ decks = {
           }
     ),
 
-
     'words': make_deck(
           'ScRead::Words'
         , """All words. A system deck (don't touch it)."""
@@ -177,12 +109,12 @@ decks = {
     ),
 
     'unsorted': make_deck(
-          'ScRead::Words -> Unsorted'
+          u'ScRead::Words→Unsorted'
         , """Unsorted words. Here you check the words you don't know."""
         , {
               'new': {
                   'perDay': 9999
-                  , 'delays': [1000*365*24*60, 100*365*24*60]
+                  , 'delays': [1*365*24*60, 10*365*24*60]
               }
 
             , 'rev': {'perDay': 0}
@@ -190,7 +122,7 @@ decks = {
     ),
 
     'filtered': make_deck(
-          'ScRead::Words -> Filtered'
+          u'ScRead::Words→Filtered'
         , """Filtered words. Here you memoize the words."""
         , {
               'new': {'perDay': 25}

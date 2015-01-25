@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """ core.py: provides init function for the plugin. """
 
 from aqt import mw
@@ -12,6 +14,7 @@ from anki.notes import Note
 from PyQt4 import QtGui
 
 import re
+import time
 
 from tools import drepr
 from scread import conf
@@ -33,7 +36,7 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
     def get_text(text_id):
         fld_text = get_field('text', 'Text')
         note = mw.col.getNote(text_id)
-        text = re.sub(r'<[^>]*>', '', note.fields[fld_text])
+        text = note.fields[fld_text]
         return text
 
 
@@ -47,6 +50,7 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
         tooltip("Done!")
         
         return result
+
 
 
     def parse_texts():
@@ -74,19 +78,22 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
             mw.col.addNote(note)
 
         def update_note((word, (count, context))):
+
             note_id = db.scalar("""
             select id
             from notes
-            where
-                sfld=?
-            and mid=%s
-            """ % model_word['id'], word)
+            where sfld=?
+              and mid=?
+            """, word, model_word['id'])
+
             note = mw.col.getNote(note_id)
             note.fields[fld_count] = str(int(note.fields[fld_count]) + count)
-            note.fields[fld_context] = note.fields[fld_context] + context
+            note.fields[fld_context] += context
             note.flush()
+            
 
         def process_text(text_id):
+
             dictionary = map(str, db.list("""
             select sfld
             from notes
@@ -99,13 +106,13 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
 
 
         def main():    
+            
             text_ids = mw.col.db.list("""
             select id
             from notes
-            where
-                tags not like "%%%s%%"
-            and mid = %s
-            """ % (conf.tags['parsed'], model_text['id']))
+            where tags not like '%%%s%%'
+              and mid = ? 
+            """ % conf.tags['parsed'], model_text['id'])
 
 
             map(process_text, text_ids)
@@ -115,15 +122,44 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
             db.execute("""
             update cards set
               did = ? 
-            where
-                did = ? 
-            and ord = ? 
+            where did = ? 
+              and ord = ? 
             """, deck_unsorted, deck_words, tmpl_unsorted)
+            
 
         run_with_warning(main)
         mw.reset()
 
+
+    def mark_as_known():
+        db = mw.col.db
         
+        #suspend all unsorted cards that weren't checked
+        db.execute("""
+        update cards set queue = -1
+        where did = ?
+          and queue = 0
+        """, get_deck('unsorted'))
+        
+        mw.reset()
+
+
+    def mark_as_new():
+        db = mw.col.db
+        
+        #suspend all unsorted cards that weren't checked
+        db.execute("""
+        update cards set
+          queue = -2
+        , reps = 1
+        , due = ? 
+        where did = ?
+          and queue = 0
+        """, conf.due_threshold, get_deck('unsorted'))
+        
+        mw.reset()
+
+
     def supply_cards():
         db = mw.col.db
 
@@ -147,13 +183,12 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
         from
           cards c
         , notes n
-        where
-            c.reps > 0
-        and c.due > 100000
-        and c.did = %s
-        and c.queue != -1
-        and c.nid = n.id
-        """ % deck_unsorted)
+        where c.reps > 0
+          and c.due <= ?
+          and c.did = ? 
+          and c.queue != -1
+          and c.nid = n.id
+        """, conf.due_threshold, deck_unsorted)
 
 
         def translate_notes():
@@ -187,7 +222,7 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
               for j in range(len(err)):
                   while words[i] != err[j]:
                       i += 1
-                  if translated[i] is None:
+                  if len(translated[i]) == 0:
                       translated[i] = translated_new[j]
 
               err = err_new
@@ -222,11 +257,10 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
           from
             cards c
           , notes n
-          where
-              c.ord = ?
-          and c.did = ?
-          and c.nid = n.id
-          and n.tags like '%%%s%%'
+          where c.ord = ?
+            and c.did = ?
+            and c.nid = n.id
+            and n.tags like '%%%s%%'
         )
         """ % conf.tags['visible']
                    , intTime(), mw.col.usn(), deck_filtered, tmpl_filtered, deck_words)
@@ -255,16 +289,15 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
         text_ids = mw.col.db.list("""
         select id
         from notes
-        where
-            tags like "%%%s%%"
-        and tags not like "%%%s%%"
-        and mid = %s
-        """ % (conf.tags['parsed'], conf.tags['available'], model_text['id']))
+        where tags like "%%%s%%"
+          and tags not like "%%%s%%"
+          and mid = ?
+        """ % (conf.tags['parsed'], conf.tags['available']), model_text['id'])
         
         words = db.all("""
         select
           n.sfld, (case 
-            when n.tags like '%%%s%%' then min(1.0, cf.ivl*1.0/%s)
+            when n.tags like '%%%s%%' then min(1.0, cf.ivl*1.0/?)
             when cu.queue = -1        then 1.0
             else                           0.0
           end) as estimation
@@ -272,18 +305,16 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
           notes n
         , cards cu
         , cards cf
-        where
-            n.id = cu.nid
-        and n.id = cf.nid
-        and n.mid = %s
-        and cu.ord = %s
-        and cf.ord = %s
-        """ % (
-              conf.tags['visible']
+        where n.id = cu.nid
+          and n.id = cf.nid
+          and n.mid = ?
+          and cu.ord = ?
+          and cf.ord = ?
+        """ % conf.tags['visible']
             , str(ivl_mature_threshold)
             , model_word['id']
             , tmpl_unsorted
-            , tmpl_filtered))
+            , tmpl_filtered)
 
         availability = run_with_warning(
             lambda: P_ESTIMATE(map(get_text, text_ids), dict(words)))
@@ -302,10 +333,9 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
           from
             cards c
           , notes n
-          where
-              c.nid = n.id
-          and c.did = ?
-          and n.tags like '%%%s%%'
+          where c.nid = n.id
+            and c.did = ?
+            and n.tags like '%%%s%%'
         )
         """ % conf.tags['available'], deck_available, deck_texts)
 
@@ -384,7 +414,6 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
 
 
     def reset():
-        #!TODO Confirmation
         if askUser('Reset your ScRead decks?', defaultno=True):
             drop()
             init()
@@ -404,6 +433,8 @@ def init(P_PARSE, P_TRANSLATE, P_ESTIMATE):
           init
         , reset
         , parse_texts
+        , mark_as_known
+        , mark_as_new
         , supply_cards
         , update_estimations
         ])

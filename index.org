@@ -1,3 +1,5 @@
+* description
+
 ScRead is a plugin for Anki SRS.
 
 ScRead (short for Scrutinized Reading) is a set of tools to help reading texts. 
@@ -81,3 +83,26 @@ Extension:
   Initially, the plugin was designed to be modular, so you can easily add your own functions to
   overcome its limitations. Check files parse.py, translate.py and estimate.py for further info.
     
+
+* roadmap 
+  - features [1/3]
+    - [ ] parse next smallest one
+    - [ ] translation choices in menu
+    - [ ] online dictionary as translator
+    - [ ] time limit restriction for online services
+    - [ ] tag for ignored
+    - [ ] soft update for models/decks
+
+  - bugs [2/3]
+    - [ ] translation
+      - [ ] ''.join -> ' '.join
+      - [ ] verb-noun-adj words are sticking to the previous entry
+      - [ ] hospitals <-> deteriorate highlighting?
+    - [ ] fix description
+
+  - restructuring [/]
+    - [ ] parse/translate/update -> one steaming lib
+    - [ ] core is too big
+      - [ ] separate sql
+      - [ ] middleware api
+    - [ ] translating functions are similiar
