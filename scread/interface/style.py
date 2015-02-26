@@ -2,11 +2,12 @@
 
 """ style.py: provides styling functions and html/css snippets """
 
-from tools import unfold
+from scread.tools import unfold
 
 
 fmt_header = lambda s: '<p class = "header">'+ s +'</p>'
 fmt_entry = lambda s: '<p class = "entry">'+ s +'</p>'
+fmt_delimiter = lambda: '<hr/>'
 fmt_highlight = lambda s: '<span class = "hl">' + s + '</span>'
 fmt_context = lambda s: '<p class = "context">' + s + '</p>'
 

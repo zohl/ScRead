@@ -6,7 +6,7 @@
 from anki.decks import defaultDeck, defaultConf
 
 from style import css, templates
-from tools import *
+from scread.tools import *
 
 
 beautify = lambda s: ' '.join(map(str.capitalize, s.split('_')))
@@ -43,7 +43,7 @@ models = {
     'word': {
           'name': 'ScRead.Word'
         , 'css': css['word']
-        , 'fields': ['Word', 'TextId', 'Count', 'Meaning', 'Context']
+        , 'fields': ['Stem', 'Words', 'TextId', 'Count', 'Meaning', 'Context'] 
         , 'templates': make_templates('word', ['unsorted', 'filtered'])
     }
 }
@@ -57,7 +57,7 @@ tags = {
 
 
 
-due_threshold = 1000
+recent_threshold = 1000
 
 
 make_deck = lambda name, description, conf = None: {
@@ -125,8 +125,8 @@ decks = {
           u'ScRead::Words→Filtered'
         , """Filtered words. Here you memoize the words."""
         , {
-              'new': {'perDay': 25}
-            , 'rev': {'perDay': 250}
+              'new': {'perDay': 10}
+            , 'rev': {'perDay': 100}
           }
     )
 }

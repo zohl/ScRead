@@ -1,5 +1,4 @@
-
-import common
+import init 
 
 from copy import deepcopy
 
