@@ -2,7 +2,7 @@ import init
 
 from copy import deepcopy
 
-from scread.tools import *
+from scread.misc.tools import *
 
 
 class TestDrepr:
@@ -123,3 +123,4 @@ class TestMerge:
     def test_copying(self):
         res = merge(self.lhs, self.rhs)
         assert res != self.lhs
+

@@ -14,8 +14,8 @@ import subprocess
 import re
 
 from common import get_stem
-from scread.interface.style import fmt_header, fmt_entry, fmt_delimiter
-from scread.tools import drepr
+from scread.gui.style import fmt_header, fmt_entry, fmt_delimiter
+from scread.misc.tools import drepr
 
 
 def make_translator(f_cmdline, f_parse):
@@ -82,7 +82,6 @@ def stardict_cmdline(word):
     return ['sdcv', '-n', str(word)]
 
 use_stardict = make_translator(stardict_cmdline, stardict_parse)
-
 
 
 _choices = dict(filter(lambda (name, _): name.startswith('use_'), locals().items()))

@@ -2,7 +2,7 @@
 
 """ style.py: provides styling functions and html/css snippets """
 
-from scread.tools import unfold
+from scread.misc.tools import unfold
 
 
 fmt_header = lambda s: '<p class = "header">'+ s +'</p>'

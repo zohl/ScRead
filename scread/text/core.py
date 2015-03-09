@@ -7,7 +7,7 @@ core.py: provides functions for external interface.
 import re
 
 from common import get_stem, remove_camel_case, is_bad, iter_words
-from scread.interface.style import fmt_context, fmt_highlight
+from scread.gui.style import fmt_context, fmt_highlight
 
 
 

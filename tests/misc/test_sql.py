@@ -2,7 +2,7 @@ import init
 
 import re
 
-from scread.sql import *
+from scread.misc.sql import *
 
 # customers.snum -> salespeople.snum
 # orders.cnum -> customers.cnum
@@ -45,6 +45,11 @@ def test_sql_select_join2():
            | join(customers ^ 'c', '@cnum', '@cnum')
            | select('@amt')))
     
+def test_sql_select_order_by():
+    assert check_query(
+        r'^select (s\.)?snum, (s.)?sname from salespeople s order by (s.)?city$'
+        , (salespeople ^ 's' | select('@snum', '@sname') | order_by('@city')))
+
 
 def test_sql_update_simple():
     assert check_query(

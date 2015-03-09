@@ -5,26 +5,8 @@
 
 from anki.decks import defaultDeck, defaultConf
 
-from style import css, templates
-from scread.tools import *
-
-
-beautify = lambda s: ' '.join(map(str.capitalize, s.split('_')))
-
-menu = {
-  'name': 'ScRead'
-  , 'items': {s:beautify(s) for s in [
-      'init'
-    , 'reset'
-    , 'parse_texts'
-    , 'mark_as_known'
-    , 'mark_as_new'
-    , 'supply_cards'
-    , 'update_estimations'
-    , 'test'
-    ]}
-}
-
+from scread.gui.style import css, templates
+from scread.misc.tools import *
 
 
 make_templates = lambda m, xs: dict(map(

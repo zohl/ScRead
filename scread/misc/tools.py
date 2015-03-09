@@ -58,15 +58,3 @@ def merge(lhs, rhs):
     return result 
 
 
-
-def cached(f):
-    class Closure:pass
-    cl = Closure()
-    cl.data = {}
-
-    def result(*args):
-        if args not in cl.data:
-            cl.data[args] = f(*args)
-        return cl.data[args]
-    
-    return result

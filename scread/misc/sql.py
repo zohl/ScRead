@@ -99,15 +99,20 @@ def parse_modificator(node):
 
     if node.name == 'distinct':
         args['distinct'] = True
+    
+    if node.name == 'order_by':
+        order = ('order' in args and args['order']) or []
+        args['order'] = order + list(node.args[0])
 
     if node.name == 'with_pk':
         args['pk'] = node.args[0] 
 
+    
     return ((mode, args), selection, data)
 
 
 def parse(node):
-    if node.name in ['distinct', 'with_pk']:
+    if node.name in ['distinct', 'with_pk', 'order_by']:
         return parse_modificator(node)
 
     if node.name in ['select', 'update']:
@@ -133,14 +138,17 @@ def to_sql(queue):
     
 
     if mode == 'select':
-        
+        order = map(lambda s: qualify_string('', s)
+                  , args['order'] if 'order' in args else [])
+
         return ('select ' + ('distinct ' if 'distinct' in args else '')
                 + ', '.join(selection)
                 + ' from ' + ', '.join(map(fmt_table, tables))
                 + pref_nn(' where ', ' and '.join(
                     map(fmt_join, joins)
                   + map(fmt_condition
-                    , sum(map(lambda (_1, _2, _3, conds): conds, tables), [])))))
+                    , sum(map(lambda (_1, _2, _3, conds): conds, tables), []))))
+                + pref_nn(' order by ', ', '.join(order)))
 
     if mode == 'update':
         conds = ''
@@ -171,11 +179,13 @@ join = lambda node, pk, fk: QueryNode('join', [pk, fk], [node])
 
 select = lambda *values: QueryNode('select', [values])
 distinct = lambda: QueryNode('distinct', [])
+order_by = lambda *values: QueryNode('order_by', [values])
 
 update = lambda *values: QueryNode('update', [values])
 with_pk = lambda pk: QueryNode('with_pk', [pk])
 
-
+q = lambda s: s.replace("'", "''")
+ 
 def execute(db, query):
     p = parse(query)
     ((mode, _1), selection, _2) = p

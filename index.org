@@ -85,29 +85,44 @@ Extension:
     
 
 * roadmap 
-  - todo [0/4]
-    - menu [0/8]
-      - [ ] submenus
+  - todo [0/6]
+    
+    - [ ] link with anki repository
+    - [-] menu [3/12]
+      - [X] init
+      - [X] reset
+        
+      - [X] parse_texts_all, parse_texts_next_one, parse_texts_next_shortest_one
+        - [X] parse_text
+
+      - [ ] mark_words_as_known
+      - [ ] mark_words_as_unknown
+
+      - [ ] add_translations_from_all_available_sources
+      - [ ] add_translations_from_google_translate
+      - [ ] add_translations_from_stardict
+      - [ ] add_translations_from_ethymonline
+            http://www.etymonline.com/index.php?allowed_in_frame=0&search=overall&searchmode=term 
+        - [ ] fetch page
+        - [ ] extract data
+
+      - [ ] update_estimations
+
       - [ ] * delimiter
       - [ ] * shortcuts
-      - [ ] parse next smallest one
-      - [ ] translation choices in menu
-        - [ ] http://www.etymonline.com/index.php?allowed_in_frame=0&search=overall&searchmode=term 
-          - [ ] fetch page
-          - [ ] extract data
-      - [ ] time limit restriction for online services
-      - [ ] * soft update for models/decks
-      - [ ] check: hospitals <-> deteriorate highlighting?
-
-    - [ ] semantic
-      - [ ] stem field
-      - [ ] tag for ignored
-
-    - [ ] move every definition to api.py
-
-    - [-] sql
-      - [X] shortcuts
-      - [ ] replace in the core
 
     - [ ] description
+      
+    - [ ] functionality [0/4]
+      - [ ] time limit restriction for online services
+      - [ ] * soft update for models/decks
+      - [ ] tag for ignored
+      - [ ] replace sql
+        
+    - [ ] bugs [0/1]
+      - [ ] check: hospitals <-> deteriorate highlighting?
+
+    - [ ] tests
+      - [ ] logic
+
 

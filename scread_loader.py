@@ -3,7 +3,7 @@ scread.py: main file for Anki plugin ScRead.
 !TODO: description
 """
 
-from scread.core import init
+from scread.gui.main import main
 
 __author__ = "Al Zohali"
 __copyright__ = "Copyright 2014, Al Zohali"
@@ -15,5 +15,5 @@ __maintainer__ = "Al Zohali"
 __email__ = "zohl@fmap.me"
 __status__ = "Development"
 
-init()
+main()
 
