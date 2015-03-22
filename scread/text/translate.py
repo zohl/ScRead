@@ -1,35 +1,40 @@
 # -*- coding: utf-8 -*-
 
-"""
-translate.py: provides functions for P_TRANSLATE parameter. 
-
-Functions that are visible[1] will be shown in translation methods menu.
-Format of a visible function:
-  in: list of words to translate
-  out: (list of translations (or empty strings) for each word
-      , list of words that weren't translated)
-"""
+""" translate.py: provides translation methods. """
 
 import subprocess 
 import re
+import urllib2
+from operator import itemgetter
 
-from common import get_stem
+from common import get_stem, strip_html
 from scread.gui.style import fmt_header, fmt_entry, fmt_delimiter
 from scread.misc.tools import drepr
+from scread.misc.delay import delayed 
 
 
-def make_translator(f_cmdline, f_parse):
+def from_shell(*args):
+    return subprocess.check_output(args).decode('utf-8').split('\n')
+
+def from_web(url):
+    response = urllib2.urlopen(url)
+    return response.read()
+
+
+def make_translator(get_source, parse):
 
     def result(word):
-        cmdline = f_cmdline(word)
-        raw = subprocess.check_output(cmdline).split('\n')
-        blocks = filter(lambda (w, _1, _2): get_stem(word) == get_stem(w), f_parse(raw))
+        pr = lambda (w, _1, _2): get_stem(word) == get_stem(w)
+        blocks = []
+        try:
+            blocks = filter(pr, parse(get_source(word)))
+        except:
+            return ''
 
         fmt_block = lambda (_, h, es):  fmt_header(h) +'\n' + '\n'.join(map(fmt_entry, es))
         return '\n\n'.join(map(fmt_block, blocks))
 
     return result
-
 
 
 
@@ -47,10 +52,9 @@ def google_translate_parse(raw):
     return blocks
 
 
-def google_translate_cmdline(word):
-    return ['trans', '-no-ansi', '-t', 'ru', str(word)]
-
-use_google_translate = make_translator(google_translate_cmdline, google_translate_parse)
+use_google_translate = make_translator(
+      lambda w: from_shell('trans', '-no-ansi', '-t', 'ru', str(w))
+    , google_translate_parse)
 
 
 
@@ -78,12 +82,32 @@ def stardict_parse(raw):
     return blocks
 
 
-def stardict_cmdline(word):
-    return ['sdcv', '-n', str(word)]
+use_stardict = make_translator(
+      lambda w: from_shell('sdcv', '-n', str(w))
+    , stardict_parse)
 
-use_stardict = make_translator(stardict_cmdline, stardict_parse)
 
 
-_choices = dict(filter(lambda (name, _): name.startswith('use_'), locals().items()))
 
-use_all = lambda word: fmt_delimiter().join(map(lambda f: f(word), choices.values()))
+def etymonline_parse(raw):
+    extract = lambda m: map(lambda i: strip_html(m.group(i)), [1, 2])
+    first_word = lambda s: re.match(r'\w*', s.lower()).group(0)
+    make_block = lambda h, e: (first_word(h), h, [e])
+
+    return map(lambda m: make_block(*extract(m))
+             , re.finditer(r'<dt[^>]*>(.*?)</dt>[^<]*<dd[^>]*>((.|\n)*?)</dd>', raw))
+
+
+use_etymonline = make_translator(
+    lambda w: from_web(
+        'http://www.etymonline.com/index.php?allowed_in_frame=0&searchmode=nl&search='
+        + get_stem(w)), etymonline_parse)
+
+
+_choices = dict(sorted(
+      filter(lambda (name, _): name.startswith('use_'), locals().items())
+    , key = itemgetter(0)))
+
+use_all = delayed(0.3)(lambda word: fmt_delimiter().join(
+    filter(lambda s: len(s) > 0
+         , map(lambda f: f(word), _choices.values()))))

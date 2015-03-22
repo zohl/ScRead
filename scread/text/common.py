@@ -11,6 +11,7 @@ import re
 re_sentence = re.compile(r'[^?!.;]+[?!.;]?\n?')
 re_word = re.compile(r"[\w]+")
 
+strip_html = lambda s: re.sub(r'</?[^<>]*/?>', ' ', s)
 
 get_stem = lambda w: porter.stem(w.lower())
 

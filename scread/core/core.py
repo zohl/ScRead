@@ -2,19 +2,26 @@
 
 """ core.py: provides core plugin functions """
 
-from anki.utils import intTime
+from anki.utils import intTime, splitFields
 from anki.notes import Note
 
 import re
 import time
+from operator import itemgetter
+
+from scread.misc.tools import drepr
 
 from scread.text import translate
 from scread.text.core import parse, estimate
 
 import conf
+
 import api
+from api import db, tg, empty_field
 
 from scread.misc.sql import execute 
+from scread.misc.delay import dmap 
+
 from queries import *
 
 
@@ -39,12 +46,12 @@ def get_new_texts(order = 'none'):
     # Accepted order values: 'size', 'date'
     query = (texts() | where(tag_is_not('parsed')) | select('@id'))
     if order == 'date': query = (query | order_by('@id'))
-    if order == 'size': query = (query | order_by('length(@flds) - length(@sfld)'))
-    return execute(api.db(), query)
+    if order == 'size': query = (query | order_by(text_length()))
+    return execute(db(), query)
 
 
 def parse_text(text_id):
-    dictionary = map(str, execute(api.db(), (words() | select(f_stem))))
+    dictionary = map(str, execute(db(), (words() | select(f_stem))))
     (new, nfo) = parse(api.get_text(text_id), dictionary) 
 
     map(lambda stem: api.add_note('word', 'words', { 
@@ -55,210 +62,97 @@ def parse_text(text_id):
 
     map(lambda (stem, (count, word, context)): api.upd_note(api.get_note_id('word', stem), {
           'Count': lambda ov: str(int(ov) + count)
-        , 'Context': lambda ov: ov + context 
-        , 'Word': lambda ov: ov + word
+        , 'Context': lambda ov: (ov if ov != empty_field() else '') + context 
+        , 'Words': lambda ov: (ov if ov != empty_field() else '') + word
     }), nfo.iteritems())
     
     api.upd_note(text_id, {}, ['parsed'])
 
 
 def populate_unsorted_deck():
-    execute(api.db(), cards
+    execute(db(), cards()
             | where(deck_is('words'), tmpl_is('word', 'unsorted')) 
             | update(set_deck('unsorted')))
 
 
+def mark_as(card_type):
+    # Accepted card_type values: 'known', 'new'
+
+    set_state = lambda: ()
+    if card_type == 'known': set_state = set_suspended
+    if card_type == 'new': set_state = set_buried
+
+    execute(db(), cards()
+            | where(deck_is('unsorted'), is_learning())
+            | update(
+                set_checked()
+              , set_recent()
+              , set_state()))
 
 
+def add_translations(f, callback):
 
-def _mark_as_known():
+    join_words = lambda cs: (words() ^ 'n'
+                             | where(tag_is_not('ignored'))
+                             | join(cs, f_note_pk, f_note_fk))
 
-    #suspend all unsorted cards that weren't checked
-    db().execute("""
-    update cards set queue = -1
-    where did = ?
-      and queue = 0
-    """, get_deck('unsorted'))
+    checked_cards = lambda: cards() ^ 'c' | where(
+        is_checked()
+      , deck_is('unsorted')
+      , is_not_suspended())
 
-    mw.reset()
+    new_cards = lambda: checked_cards() | where(is_recent())
 
+    data = execute(db(), join_words(new_cards()) | select('n.id', '@flds'))
+    (nids, fss) = zip(*data) or ([], [])
+    ws = map(lambda flds: splitFields(flds)[api.get_field('word', 'Words')], fss)
+   
+    map(lambda (nid, tr): api.upd_note(
+          nid
+        , {'Translation': tr}
+        , [] if len(tr) > 0 else ['ignored'])
+        , zip(nids, dmap(f, ws, callback, conf.feedback_time)))
 
-def _mark_as_new():
+    execute(db(), cards() ^ 'c2' | where(tmpl_is('word', 'filtered'))
+            | join(join_words(new_cards()), '@nid', 'n.id')
+            | update(set_deck('filtered'), set_recent(), set_learning())
+            | with_pk('@id'))
 
-    #suspend all unsorted cards that weren't checked
-    db().execute("""
-    update cards set
-      queue = -2
-    , reps = 1
-    , due = ? 
-    where did = ?
-      and queue = 0
-    """, conf.due_threshold, get_deck('unsorted'))
+    execute(db(), checked_cards() | update(set_suspended()))
+    
 
-    mw.reset()
+def update_estimations(callback):
+    text_ids = execute(db(), texts()
+                       | where(tag_is('parsed'), tag_is_not('available'))
+                       | select('@id'))
 
+    query_all = lambda: words() 
+    query_checked = lambda: (words() ^ 'n'
+                     | join(cards() ^ 'c' | where(tmpl_is('word', 'unsorted')
+                                                , is_suspended()), '@id', '@nid'))
 
-def _supply_cards():
-
-    (fld_word, fld_meaning, fld_context) = map(lambda fld: api.get_field('word', fld), [
-        'Word', 'Meaning', 'Context'
+    query_learning = lambda: (words() ^ 'n'
+                     | join(cards() ^ 'c' | where(tmpl_is('word', 'filtered')
+                                                , is_suspended()), '@id', '@nid'))
+    estim = {}
+    map(lambda (q, val): estim.update(dict(execute(db(), q() | select(stem(), val)))), [
+          (query_all, '0')
+        , (query_checked, '1')
+        , (query_learning, maturity())
     ])
+ 
+    availability = dmap(lambda text: estimate(text, estim)
+                        , map(api.get_text, text_ids)
+                        , callback
+                        , conf.feedback_time)
 
-    # select new cards
-    notes = db().all("""
-    select distinct
-      n.id
-    , n.sfld
-    from
-      cards c
-    , notes n
-    where c.reps > 0
-      and c.due <= ?
-      and c.did = ? 
-      and c.queue != -1
-      and c.nid = n.id
-    """, conf.due_threshold, api.get_deck('unsorted'))
+    changed_ids = map(itemgetter(0), filter(itemgetter(1), zip(text_ids, availability)))
 
-
-    def translate_notes():
-
-      def update_note(note_id, meaning):
-          note = mw.col.getNote(note_id)
-          note.fields[fld_meaning] = meaning
-          note.addTag(conf.tags['visible'])
-          note.flush()
-
-      (ids, words) = zip(*notes)
-
-      (translated, err) = run_with_warning(lambda: P_TRANSLATE(words))
-
-      choices = filter(lambda s:
-            (hasattr(translate.__getattribute__(s), '__call__')) and not s.startswith('_')
-          , dir(translate))
-
-
-
-      while len(err) > 0:
-          res = chooseList(
-              re.sub('(.{50,80}) ', '\\1\n', msg % (', '.join(err)))
-            , map(lambda s: s.replace('_', ' '), choices))
-
-          p_translate_new = translate.__getattribute__(choices[res])
-
-          (translated_new, err_new) = run_with_warning(lambda: p_translate_new(err))
-
-          i = 0
-          for j in range(len(err)):
-              while words[i] != err[j]:
-                  i += 1
-              if len(translated[i]) == 0:
-                  translated[i] = translated_new[j]
-
-          err = err_new
-
-      map(lambda xs: update_note(*xs), zip(ids, translated))
-
-
-    if len(notes) > 0:
-        translate_notes()
-
-    # suspend checked cards
-    db().execute("""
-    update cards set
-      queue = -1
-    , mod = ?
-    , usn = ?
-    where
-        did = ?
-    and queue != 0
-    and queue != -1
-    """, intTime(), mw.col.usn(), api.get_deck('unsorted'))
-
-    # move decent cards to words::filtered
-    db().execute("""
-    update cards set 
-      queue = 0
-    , mod = ?
-    , usn = ?
-    , did = ?
-    where id in (
-      select c.id
-      from
-        cards c
-      , notes n
-      where c.ord = ?
-        and c.did = ?
-        and c.nid = n.id
-        and n.tags like '%%%s%%'
-    )
-    """ % conf.tags['visible']
-                 , intTime(), mw.col.usn(), api.get_deck('filtered'), api.get_tmpl('word', 'filtered'), api.get_deck('words'))
-
-    mw.reset()
-
-
-def _update_estimations():
-
-    ivl_mature_threshold = 21
-
-    text_ids = mw.col.db().list("""
-    select id
-    from notes
-    where tags like "%%%s%%"
-      and tags not like "%%%s%%"
-      and mid = ?
-    """ % (conf.tags['parsed'], conf.tags['available']), api.get_model('text')['id'])
-
-    words = db().all("""
-    select
-      n.sfld, (case 
-        when n.tags like '%%%s%%' then min(1.0, cf.ivl*1.0/?)
-        when cu.queue = -1        then 1.0
-        else                           0.0
-      end) as estimation
-    from
-      notes n
-    , cards cu
-    , cards cf
-    where n.id = cu.nid
-      and n.id = cf.nid
-      and n.mid = ?
-      and cu.ord = ?
-      and cf.ord = ?
-    """ % conf.tags['visible']
-        , str(ivl_mature_threshold)
-        , api.get_model('word')['id']
-        , api.get_tmpl('word', 'unsorted')
-        , api.get_tmpl('word', 'filtered'))
-
-    availability = run_with_warning(
-        lambda: estimate(map(api.get_text, text_ids), dict(words)))
-
-    fst = lambda (a, b): a
-    snd = lambda (a, b): b
-    changed_ids = map(fst, filter(snd, zip(text_ids, availability)))
-
-    mw.col.tags.bulkAdd(changed_ids, conf.tags['available'])
-
-    db().execute("""
-    update cards set
-      did = ? 
-    where id in (
-      select c.id
-      from
-        cards c
-      , notes n
-      where c.nid = n.id
-        and c.did = ?
-        and n.tags like '%%%s%%'
-    )
-    """ % conf.tags['available'], api.get_deck('available'), api.get_deck('texts'))
-
-    mw.reset()
-
-
-
-
-
-
+    tg().bulkAdd(changed_ids, conf.tags['available'])
+    
+    execute(db(), (cards() ^ 'c'
+                   | where(deck_is('texts'))
+                   | join(texts() ^ 'n' | where(tag_is('available')), '@nid', '@id')
+                   | update(set_deck('available'))
+                   | with_pk('@id')))
 

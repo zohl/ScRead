@@ -18,7 +18,7 @@ class QueryNode:
 
     def __or__(self, other):
         assert isinstance(other, QueryNode)
-        other.children.append(self)
+        other.children.insert(0, self)
         return other
 
     def __xor__(self, other):
@@ -52,27 +52,25 @@ def parse_single_table(node):
         return ([(name, alias, cols, conds)], [])
 
     if node.name == 'where':
-        ([(name, alias, cols, conds)], _) = parse_single_table(node.children[0])
+        ([(name, alias, cols, conds)], _1) = parse_single_table(node.children[0])
         return ([(name, alias, cols, conds + list(node.args[0]))], [])
 
 
 def parse_join(node):
-    [pk, fk] = node.args
 
-    ([t], _) = parse_single_table(node.children[0])
-    table = qualify_table(t)
+    def parse_child((key, node)):
+        (tables, joins) = parse(node)
+        if len(tables) == 1:
+            tbl = qualify_table(tables[0])
+            key = qualify_name(tbl[1], key)
+            return (key, [tbl], [])
+        else:
+            key = qualify_name('', key)
 
-    pk = qualify_name(table[1], pk)
-    
-    (tables, joins) = parse(node.children[1])
-    if len(tables) == 1:
-        [t] = tables
-        fk = qualify_name(t[1], fk)
-        tables = [qualify_table(t)]
-    
-    new_join = (pk, qualify_name('', fk))
-    return (tables+[table], joins + [new_join])
+        return (key, tables, joins)
 
+    (keys, tables, joins) = zip(*map(parse_child, zip(node.args, node.children)))
+    return (sum(tables, []), sum(joins, []) + [keys])
 
 
 def parse_modes(node):
@@ -84,11 +82,11 @@ def parse_modes(node):
     selection = []
 
     if node.name == 'select':
-        selection = map(lambda s: qualify_string('', s), node.args[0])
+        selection = map(lambda s: qualify_string('', str(s)), node.args[0])
 
     if node.name == 'update':
         selection = map(lambda (k, v):
-                        (qualify_string('', k), qualify_string('', v)), node.args[0])
+                        (qualify_string('', k), qualify_string('', str(v))), node.args[0])
 
     return ((node.name, {}), selection, (tables, joins))
 
@@ -126,13 +124,12 @@ def parse(node):
 
 
 def to_sql(queue):
-
     ((mode, args), selection, (tables, joins)) = queue
-
+    
     fmt_table = lambda (name, alias, _1, _2): name + (' ' + alias if len(alias) > 0 else '')
     fmt_condition = lambda s: '(' + s + ')'
     fmt_join = lambda (key1, key2): '(' + key1 + '=' + key2 + ')'
-    fmt_value = lambda (k, v): k + ' = ' + v
+    fmt_value = lambda (k, v): k + ' = ' + str(v)
 
     pref_nn = lambda pref, s: pref+s if len(s) > 0 else ''
     
@@ -191,7 +188,7 @@ def execute(db, query):
     ((mode, _1), selection, _2) = p
 
     if mode == 'select':
-        if len(selection) == 1:
+        if len(selection) == 1 and selection[0] != '*':
             return db.list(to_sql(p))
         return db.all(to_sql(p))
 

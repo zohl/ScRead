@@ -25,7 +25,7 @@ models = {
     'word': {
           'name': 'ScRead.Word'
         , 'css': css['word']
-        , 'fields': ['Stem', 'Words', 'TextId', 'Count', 'Meaning', 'Context'] 
+        , 'fields': ['Stem', 'Words', 'TextId', 'Count', 'Translation', 'Context'] 
         , 'templates': make_templates('word', ['unsorted', 'filtered'])
     }
 }
@@ -35,12 +35,13 @@ tags = {
     'parsed': 'ScRead.parsed'
   , 'available': 'ScRead.available'
   , 'visible': 'ScRead.visible'
+  , 'ignored': 'ScRead.ignored'
 }   
 
 
-
+feedback_time = 3.0
 recent_threshold = 1000
-
+mature_threshold = 21
 
 make_deck = lambda name, description, conf = None: {
     'name': name

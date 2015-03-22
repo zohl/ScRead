@@ -11,9 +11,12 @@ import re
 to_id = lambda s: re.sub(r'[^\w]', '', s.lower().replace(' ', '_'))
 
 def create_item(prefix, root, name, fs):
-    action = QAction(name, mw)
-    mw.connect(action, SIGNAL("triggered()"), fs[prefix + '_' + to_id(name)])
-    root.addAction(action)
+    if name == '--':
+        root.addSeparator()
+    else:
+        action = QAction(name, mw)
+        mw.connect(action, SIGNAL("triggered()"), fs[prefix + '_' + to_id(name)])
+        root.addAction(action)
 
 def create_submenu(root, name):
     submenu = root.addMenu(name)

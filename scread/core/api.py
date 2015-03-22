@@ -10,6 +10,8 @@ from anki.notes import Note
 
 
 from scread.misc.cache import cached, refresh
+from scread.text.common import strip_html
+
 import conf
 
 from scread.misc.sql import execute
@@ -52,7 +54,7 @@ def get_tmpl(model, tmpl):
 def get_text(text_id):
     note = col().getNote(text_id)
     text = note.fields[get_field('text', 'Text')]
-    return stripHTML(text)
+    return stripHTML(strip_html(text))
 
 
 @refresh('col')
@@ -123,13 +125,14 @@ def add_tags(tags):
 
 
 
+empty_field = lambda: '(N/A)'
 
 def get_note(note_id):
     return col().getNote(note_id)
 
 @cached('col')
 def get_note_id(model, sfld):
-    [note_id] = execute(db(), notes 
+    [note_id] = execute(db(), notes()
                         | where(model_is(model), "@sfld = '" + q(sfld)+ "'") 
                         | select('@id'))
     return note_id
@@ -138,7 +141,7 @@ def get_note_id(model, sfld):
 def add_note(model, deck, flds, tags = []):
     note = Note(col(), get_model(model))
     note.model()['did'] = get_deck(deck)
-    note.fields = map(lambda s: (s in flds and flds[s]) or 'X', conf.models[model]['fields'])
+    note.fields = map(lambda s: (s in flds and flds[s]) or empty_field(), conf.models[model]['fields'])
 
     map(lambda tag: note.addTag(conf.tags[tag]), tags)
     col().addNote(note)

@@ -40,17 +40,18 @@ css = unfold({
               .context {
                 font-size: 14px;
                 text-align: left;
-              }
-              
-              .context .hl:before {content: "["}
-              .context .hl:after  {content: "]"}
+              } 
 
-              .meaning .header {
+              .context .hl {
+                text-decoration: underline;
+              }
+
+              .translation .header {
                 text-align: left;
                 font-weight: bold;
               }
               
-              .meaning .entry {
+              .translation .entry {
                 text-align: left;
               }
               """
@@ -74,7 +75,7 @@ templates = {
 
     , 'word.unsorted': {
             'qfmt': """
-                    <p class = "word">{{Word}}</p>
+                    <p class = "word">{{Words}}</p>
                     {{Context}}
                     """
 
@@ -87,14 +88,14 @@ templates = {
     
     , 'word.filtered': {
              'qfmt': """
-                     <p class = "word">{{Word}}</p>
+                     <p class = "word">{{Words}}</p>
                      <p class = "context">{{Context}}</p>
                      """
 
            , 'afmt': """
                      {{FrontSide}}
                      <hr/>
-                     <div class = "meaning">{{Meaning}}</div>
+                     <div class = "translation">{{Translation}}</div>
                      """
     }
 }

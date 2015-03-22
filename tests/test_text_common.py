@@ -2,7 +2,7 @@ import init
 
 import re
 
-from scread.tools import drepr
+from scread.misc.tools import drepr
 from scread.text.common import get_stem, remove_camel_case, is_bad, iter_words
 
 samples = [

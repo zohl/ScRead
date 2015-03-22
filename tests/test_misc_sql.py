@@ -2,6 +2,8 @@ import init
 
 import re
 
+from scread.misc.tools import drepr
+
 from scread.misc.sql import *
 
 # customers.snum -> salespeople.snum
@@ -34,17 +36,25 @@ def test_sql_select_where():
 
 def test_sql_select_join():
     assert check_query(
-        r'^select (c\.)?cname from customers c, salespeople s where \(s.snum=c.snum\)$'
+        r'^select (c\.)?cname from customers c, salespeople s where \(c\.snum=s\.snum\)$'
         , (customers ^ 'c' | join(salespeople ^ 's', '@snum', '@snum') | select('@cname')))
 
-def test_sql_select_join2():
+def test_sql_select_join_parallel():
     assert check_query(
-        r'^select (o\.)?amt from orders o, salespeople s, customers c where \(s.snum=o.snum\) and \(c.cnum=cnum\)$'
+        r'^select (o\.)?amt from orders o, salespeople s, customers c where \(o\.snum=s\.snum\) and \(o\.cnum=c\.cnum\)$'
         , (orders ^ 'o'
            | join(salespeople ^ 's', '@snum', '@snum')
-           | join(customers ^ 'c', '@cnum', '@cnum')
+           | join(customers ^ 'c', 'o.cnum', '@cnum')
            | select('@amt')))
-    
+   
+def test_sql_select_join_nested():
+    assert check_query(
+          r"select \* from customers c, orders o, salespeople s where \(o\.snum=s\.snum\) and \(c\.cnum=o\.cnum\)"
+        , (customers ^ 'c'
+           | join(orders ^ 'o'
+                  | join(salespeople ^ 's', 'o.snum', '@snum'), '@cnum', 'o.cnum')
+           | select('*')))
+
 def test_sql_select_order_by():
     assert check_query(
         r'^select (s\.)?snum, (s.)?sname from salespeople s order by (s.)?city$'
@@ -63,7 +73,7 @@ def test_sql_update_where():
 
 def test_sql_update_join():
     assert check_query(
-        r'update customers set rating = 10 where cnum in \(select c.cnum from customers c, salespeople s where \(s\.snum=c\.snum\) and \(s\.comm = 10\)\)'
+        r'update customers set rating = 10 where cnum in \(select c.cnum from customers c, salespeople s where \(c\.snum=s\.snum\) and \(s\.comm = 10\)\)'
         , (customers ^ 'c'
            | join(salespeople ^ 's' | where('@comm = 10'), '@snum', '@snum')
            | update(('@rating', '10'))

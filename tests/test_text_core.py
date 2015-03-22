@@ -2,7 +2,7 @@ import init
 
 import re
 
-from scread.tools import drepr
+from scread.misc.tools import drepr
 from scread.text.core import parse, estimate
 
 
@@ -44,18 +44,18 @@ class TestParse():
 class TestEstimate():
 
     def test_completed(self):
-        assert estimate(['foo bar baz qux quux'], {
+        assert estimate('foo bar baz qux quux', {
               'foo' : 1.0
             , 'bar' : 1.0
             , 'baz' : 1.0
             , 'qux' : 1.0
             , 'quux': 1.0
-        }) == [True]
+        }) == True
 
 
     def test_incompleted(self):
-        assert estimate(['foo bar baz foo bar'], {
+        assert estimate('foo bar baz foo bar', {
               'foo' : 0.8 
             , 'bar' : 0.8
             , 'baz' : 1.0
-        }) == [False]
+        }) == False

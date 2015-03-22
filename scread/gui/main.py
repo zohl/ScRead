@@ -9,43 +9,39 @@ from anki.hooks import addHook
 
 from PyQt4 import QtGui
 
+from scread.text import translate 
 
+from scread.core import conf
 from scread.core import core
+from scread.misc.delay import dmap 
+
 from menu import init_menu 
 
 
-def run_with_warning(f):
-    tooltip("Operation has been started, it may take some time. Please, be patient.")
+def immediate_message(msg):
+    tooltip(msg)
     QtGui.qApp.processEvents()
 
-    result = f()
-
-    closeTooltip()
-    tooltip("Done!")
-
-    return result
+show_progress = lambda i, n: immediate_message('Progress: %d/%d' % (i, n))
+show_done = lambda: tooltip('Done!')
 
 
-items = [['ScRead', [
-      'Init'
-    , 'Reset'
-    , [u'Parse texts…', [
-          'all'
-        , 'next one'
-        , 'next shortest one'
+items = [['&ScRead', [
+      '&Init'
+    , [u'&Parse texts…', [
+          '&all'
+        , '--'
+        , '&next one'
+        , 'next &shortest one'
       ]]
-    , [u'Mark words…', [
-          'as known'
-        , 'as unknown'
+    , [u'&Mark words…', [
+          'as &known'
+        , 'as &new'
       ]]
-    , [u'Add translations…', [
-          'from all available sources'
-        , 'from Google Translate'
-        , 'from StarDict'
-        , 'from Ethymonline'
-      ]]
-    , 'Update estimations'
-    , 'Debug'
+    , '&Add translations'
+    , '&Update estimations'
+    , '--'
+    , '&Reset'
     ]
 ]]
 
@@ -62,14 +58,19 @@ def _scread_reset():
 
 def _mk_parse_text(f, texts):
     if len(texts) > 0:
-        run_with_warning(lambda: f(texts))
+        f(texts)
         core.populate_unsorted_deck()
         mw.reset()
+        show_done()
     else:
         tooltip("There is no new texts.")
 
 def _scread_parse_texts_all():
-    _mk_parse_text(lambda texts: map(core.parse_text, texts), core.get_new_texts())
+    _mk_parse_text(lambda texts: dmap(core.parse_text
+                                    , texts
+                                    , show_progress
+                                    , conf.feedback_time)
+                 , core.get_new_texts())
 
 def _scread_parse_texts_next_one():
     _mk_parse_text(lambda texts: core.parse_text(texts[0]), core.get_new_texts(order='date'))
@@ -79,38 +80,26 @@ def _scread_parse_texts_next_shortest_one():
 
     
 
-
 def _scread_mark_words_as_known():
-    #TODO
-    pass
+    core.mark_as('known')
+    mw.reset()
 
-def _scread_mark_words_as_unknown():
-    #TODO
-    pass
+def _scread_mark_words_as_new():
+    core.mark_as('new')
+    mw.reset()
+    
 
-def _scread_add_translations_from_all_available_sources():
-    #TODO
-    pass
-
-def _scread_add_translations_from_google_translate():
-    #TODO
-    pass
-
-def _scread_add_translations_from_stardict():
-    #TODO
-    pass
-
-def _scread_add_translations_from_ethymonline():
-    #TODO
-    pass
+def _scread_add_translations():
+    core.add_translations(translate.use_all, show_progress)
+    mw.reset()
+    show_done()
+    
 
 def _scread_update_estimations():
-    #TODO
-    pass
+    core.update_estimations(show_progress)
+    mw.reset()
+    show_done()
 
-def _scread_debug():
-    #TODO
-    pass
 
 
 fs = dict(filter(lambda (name, _): name.startswith('_scread'), locals().items()))

@@ -1,7 +1,8 @@
 """ cache.py: provides 'cached' and 'refresh' decorators """
 
+from tools import Closure
+
 def _mk_interface():
-    class Closure:pass
     gcl = Closure()
     gcl.namespaces = {}
 

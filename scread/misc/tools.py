@@ -3,6 +3,9 @@
 from copy import deepcopy
 
 
+class Closure: pass
+
+
 def drepr(x, sort = True, indent = 0):
     """ Formats dictionary x in a readable way.
     Taken from http://ze.phyr.us/python-dict-repr/
