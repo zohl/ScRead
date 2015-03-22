@@ -79,7 +79,8 @@ and memorizing one (see the next paragraph) can be performed in parallel.
 ![screen unsorted deck](./static/screen-unsorted-deck.png)
 
 ##### Memoizing words
-Choose `ScRead → Add translations` to supply new cards with translations. There are few sources:
+Choose `ScRead → Add translations` to supply new cards with
+translations. There are few sources:
 
 * Google Translate (via `trans` utility)
 * StarDict dictionaries (via `sdcv` utility)
