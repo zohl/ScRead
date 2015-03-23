@@ -91,7 +91,7 @@ use_stardict = make_translator(
 
 def etymonline_parse(raw):
     extract = lambda m: map(lambda i: strip_html(m.group(i)), [1, 2])
-    first_word = lambda s: re.match(r'\w*', s.lower()).group(0)
+    first_word = lambda s: re.match(r' *(\w*)', s.lower()).group(1)
     make_block = lambda h, e: (first_word(h), h, [e])
 
     return map(lambda m: make_block(*extract(m))
