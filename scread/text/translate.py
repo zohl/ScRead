@@ -2,23 +2,13 @@
 
 """ translate.py: provides translation methods. """
 
-import subprocess 
 import re
-import urllib2
 from operator import itemgetter
 
-from common import get_stem, strip_html
+from common import get_stem, strip_html, get_page, get_stdout
 from scread.gui.style import fmt_header, fmt_entry, fmt_delimiter
 from scread.misc.tools import drepr
 from scread.misc.delay import delayed 
-
-
-def from_shell(*args):
-    return subprocess.check_output(args).decode('utf-8').split('\n')
-
-def from_web(url):
-    response = urllib2.urlopen(url)
-    return response.read()
 
 
 def make_translator(get_source, parse):
@@ -53,7 +43,7 @@ def google_translate_parse(raw):
 
 
 use_google_translate = make_translator(
-      lambda w: from_shell('trans', '-no-ansi', '-t', 'ru', str(w))
+      lambda w: get_stdout('trans', '-no-ansi', '-t', 'ru', str(w))
     , google_translate_parse)
 
 
@@ -83,7 +73,7 @@ def stardict_parse(raw):
 
 
 use_stardict = make_translator(
-      lambda w: from_shell('sdcv', '-n', str(w))
+      lambda w: get_stdout('sdcv', '-n', str(w))
     , stardict_parse)
 
 
@@ -99,7 +89,7 @@ def etymonline_parse(raw):
 
 
 use_etymonline = make_translator(
-    lambda w: from_web(
+    lambda w: get_page(
         'http://www.etymonline.com/index.php?allowed_in_frame=0&searchmode=nl&search='
         + get_stem(w)), etymonline_parse)
 

@@ -33,6 +33,7 @@ models = {
 
 tags = {
     'parsed': 'ScRead.parsed'
+  , 'fetched': 'ScRead.fetched'
   , 'available': 'ScRead.available'
   , 'visible': 'ScRead.visible'
   , 'ignored': 'ScRead.ignored'

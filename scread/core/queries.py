@@ -45,8 +45,9 @@ stem = lambda: '@sfld'
 
 maturity = lambda: 'min(1.0, @ivl*1.0/%d)' % conf.mature_threshold
 
-text_length =lambda: 'length(@flds) - length(@sfld)'
-
+text_length = lambda: 'length(@flds) - length(@sfld)'
+is_empty = lambda: text_length() + ' <= 12'
+is_not_empty = lambda: text_length() + ' > 12'
 
 [is_learning, is_suspended, is_buried] = map(
     lambda x: lambda: '@queue = ' + str(x), [0, -1, -2])

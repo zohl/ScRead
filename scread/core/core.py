@@ -12,6 +12,7 @@ from operator import itemgetter
 from scread.misc.tools import drepr
 
 from scread.text import translate
+from scread.text.scrape import scrape
 from scread.text.core import parse, estimate
 
 import conf
@@ -42,17 +43,28 @@ def reset():
     init()
 
 
+def get_empty_texts():
+    return execute(db(), texts() | where(is_empty()) | select('@id'))
+
+def fetch_text(text_id):
+    [url] = execute(db(), texts() | where('@id = '+str(text_id)) | select('@sfld'))
+    if re.match(r' *https?://', url) is not None:
+        text = scrape(url)
+        api.upd_note(text_id, {'Text': text}, ['fetched'])
+
 def get_new_texts(order = 'none'):
     # Accepted order values: 'size', 'date'
-    query = (texts() | where(tag_is_not('parsed')) | select('@id'))
+    query = (texts() | where(is_not_empty(), tag_is_not('parsed')) | select('@id'))
     if order == 'date': query = (query | order_by('@id'))
     if order == 'size': query = (query | order_by(text_length()))
     return execute(db(), query)
 
 
 def parse_text(text_id):
+    text = api.get_text(text_id)
+
     dictionary = map(str, execute(db(), (words() | select(f_stem))))
-    (new, nfo) = parse(api.get_text(text_id), dictionary) 
+    (new, nfo) = parse(text, dictionary) 
 
     map(lambda stem: api.add_note('word', 'words', { 
           'Stem': stem
