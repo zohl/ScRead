@@ -12,6 +12,7 @@ from anki.notes import Note
 from scread.misc.cache import cached, refresh
 from scread.text.common import strip_html
 
+from scread.gui.style import font_size
 import conf
 
 from scread.misc.sql import execute
@@ -79,6 +80,7 @@ def rem_deck(name):
 @refresh('col')
 def add_field(m, field):
     f = ms().newField(field)
+    f['size'] = font_size
     ms().addField(m, f)
 
 

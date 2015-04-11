@@ -1,13 +1,9 @@
 * bugs
-  - [ ] replace html entities in api.get_text
-  - [ ] consider words-with-dashes
-  - [ ] incorrect scraping: http://blog.erratasec.com/2015/02/technical-terms-are-not-ambiguous.html
 * features
-  - [ ] autoscrape pages
   - [ ] load from file
   - [ ] model for bunch loading
   - [ ] add urban-dictionary http://www.urbandictionary.com/define.php?term=<test>
 * roadmap
   - [ ] tests for core.fetch_pages
-  - [ ] expand scraping tests
+  - [X] expand scraping tests
   - [ ] readme 

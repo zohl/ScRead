@@ -1,4 +1,5 @@
 *.pyc
 */__pycache__
-tests/urls_data
+tests/cache_data
+tests/testing_ground.py
 examples

@@ -12,15 +12,17 @@ fmt_highlight = lambda s: '<span class = "hl">' + s + '</span>'
 fmt_context = lambda s: '<p class = "context">' + s + '</p>'
 
 
+font_size = 14
+
 css = unfold({
 
       'card': """
               .card {
                 font-family: arial;
-                font-size: 14px;
+                font-size: %spx 
                 text-align: left;
               }
-              """
+              """ % font_size
     
     , 'text': lambda s: s['card'] + """
 
@@ -33,12 +35,12 @@ css = unfold({
     , 'word': lambda s: s['card'] + """
 
               .word {
-                font-size: 20px;
+                font-size: 1.5em;
                 text-align: center;
               }
 
               .context {
-                font-size: 14px;
+                font-size: %spx;
                 text-align: left;
               } 
 
@@ -54,7 +56,7 @@ css = unfold({
               .translation .entry {
                 text-align: left;
               }
-              """
+              """ % font_size
 })
 
 

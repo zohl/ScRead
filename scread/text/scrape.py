@@ -3,10 +3,9 @@
 """ scrape.py: provides functions to retrieve text from web pages. """
 
 import re
+from HTMLParser import HTMLParser   
 from operator import itemgetter
-from common import get_page
-
-SENTENCE_THRESHOLD = 100
+from common import get_page, strip_html, tags_not_text, tags_inline, tags_blocks
 
 
 filter_with = lambda p, xs, ys: zip(*filter(lambda (x, y): p(x), zip(xs, ys)))[1]
@@ -47,7 +46,7 @@ def merge_clusters(xs, cs):
     means = map(average, clusters)
     
     def is_near(i, j):
-       return abs(means[i] - means[j])**4 / (1 + (widths[i] + widths[j])) < 0.1
+       return abs(means[i] - means[j])**6 / (1 + (widths[i] + widths[j])**2) < 0.05
 
     adjs = map(lambda i: map(lambda j: is_near(i, j), range(i)), range(n))
 
@@ -68,8 +67,9 @@ def classify(ps):
     (xs, ys) = zip(*ps)
     (pxs, pys) = zip(*get_peaks(ps))
     text_threshold = min(pys)
-    
-    (ns1, ps1) = zip(*filter(lambda (n, (x, y)): y > SENTENCE_THRESHOLD, enumerate(ps)))
+   
+    avg = average(ys)
+    (ns1, ps1) = zip(*filter(lambda (n, (x, y)): y > avg, enumerate(ps)))
     (xs1, ys1) = zip(*ps1)
 
     cs1 = merge_clusters(xs1, kmeans(xs1, [xs1[0], xs1[-1]] + list(pxs)))
@@ -79,38 +79,62 @@ def classify(ps):
     return (max(0, min(ns2)-1), min(len(ps), max(ns2)+2))
 
 
-
 def get_blocks(page):
-    
-    mk_regexp = lambda tmpl, *tags: re.compile(tmpl % '|'.join(tags), flags=re.S|re.I)
+    class MyHTMLParser(HTMLParser):
 
-    re_not_text = mk_regexp('<(?P<tag>%s)(?P<attr> [^<>]*)?(/>|>(?P<text>.*?)</(?P=tag)>)'
-                         , 'style', 'script', 'object', 'img', 'button', 'input', 'textarea')
+        def __init__(self):
+            HTMLParser.__init__(self)
+            self._skip_tag = None 
+            self._buffer = ''
+            self._blocks = []
 
-    re_inlines = mk_regexp('</?(?P<tag>%s)(?P<attr> [^<>]*)?>'
-                         , 'b', 'big', 'i', 'small', 'tt', 'abbr', 'acronym', 'cite'
-                         , 'code', 'dfn', 'em', 'kbd', 'strong', 'samp', 'var', 'a'
-                         , 'bdo', 'br', 'q', 'span', 'sub', 'sup')
+        def _append(self, data):
+            if self._skip_tag == None:
+                self._buffer += data
 
-    re_blocks = mk_regexp('<(?P<tag>%s)(?P<attr> [^<>]*)?>(?P<text>[^<>]*?)</(?P=tag)>'
-                        , 'dd', 'div', 'p', 'pre', 'h[1-6]', 'ol', 'ul', 'table')
+        def _flush(self):
+            if len(re.sub(r'\s+', '', strip_html(self._buffer))) > 0:
+                self._blocks.append(re.sub(r'(\n\s*)+', '\n', self._buffer))
+            self._buffer = ''
+            
+        def handle_starttag(self, tag, attrs):
+            if tag in tags_not_text:
+                self._skip_tag = tag
 
-    not_empty = lambda m: (lambda text:
-                           text is not None
-                       and len(text) > 0
-                       and (re.match(r'^[ \n]*$', text) is None))(m.group('text'))
+            elif tag in tags_inline:
+                self._append('<'+tag+'>') #TODO +attrs
 
-    page = re_inlines.sub('', re_not_text.sub('', page))
+            elif tag in tags_blocks:
+                self._flush()
 
-    return map(lambda m: map(lambda s: m.group(s), ['tag', 'attr', 'text'])
-             , filter(not_empty, re_blocks.finditer(page)))
+        def handle_endtag(self, tag):
+            if tag in tags_not_text:
+                if self._skip_tag == tag:
+                    self._skip_tag = None
 
+            elif tag in tags_inline:
+                self._append('</'+tag+'>') 
+
+        def handle_data(self, data):
+            self._append(data)
+
+    parser = MyHTMLParser()
+    re_comment = re.compile('<!--.*?-->', flags=re.S|re.I)
+    parser.feed(re_comment.sub('', page))
+    parser._flush()
+    parser.close()
+
+    return parser._blocks
+
+
+cost = lambda s: len(re.findall('[^.;?!]{2}[.;?!](?= )', strip_html(s)))
 
 def scrape(url):
-    blocks = map(itemgetter(2), get_blocks(get_page(url)))
-    n = len(blocks)
-    (xs, ys) = [normalize(range(n)), map(len, blocks)]
+    blocks = get_blocks(get_page(url))
 
+    n = len(blocks)
+    (xs, ys) = [normalize(range(n)), map(cost, blocks)] 
     (l_bound, r_bound) = classify(zip(xs, ys))
-    return '<p>' + '</p>\n<p>'.join(blocks[l_bound:r_bound]).decode('utf-8') + '</p>'
+
+    return '<p>' + '</p>\n<p>'.join(blocks[l_bound:r_bound]) + '</p>'
 

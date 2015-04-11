@@ -186,6 +186,7 @@ def test_update_estimations():
     add_note('text', 'texts', {'Source': 'text2', 'Text': 'foo bar baz qux'})
     add_note('text', 'texts', {'Source': 'text2', 'Text': 'foo bar baz qux quux'})
     add_note('text', 'texts', {'Source': 'text2', 'Text': 'foo bar baz'})
+    add_note('text', 'texts', {'Source': 'text2', 'Text': ''})
 
     text_ids = get_new_texts()
     skip_duration = (conf.mature_threshold/3)*2
@@ -215,5 +216,3 @@ def test_update_estimations():
 
     drop()
     
-
-
