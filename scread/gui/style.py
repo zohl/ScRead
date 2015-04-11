@@ -15,7 +15,7 @@ fmt_context = lambda s: '<p class = "context">' + s + '</p>'
 font_size = 14
 
 css = unfold({
-
+     
       'card': """
               .card {
                 font-family: arial;
@@ -23,7 +23,10 @@ css = unfold({
                 text-align: left;
               }
               """ % font_size
+
+    , 'batch': ''
     
+ 
     , 'text': lambda s: s['card'] + """
 
               .from {
@@ -62,7 +65,13 @@ css = unfold({
 
 
 templates = {
-      'text.default': {
+
+      'batch.default': {
+            'qfmt': """ {{List}} """
+          , 'afmt': """ {{FrontSide}} """
+    }
+
+    , 'text.default': {
             'qfmt': """
                     {{Text}}
                     <p class="from">From: <span>{{Source}}</span></p>

@@ -15,6 +15,13 @@ make_templates = lambda m, xs: dict(map(
 
 
 models = {
+    'batch': {
+          'name': 'ScRead.Batch'
+        , 'css': css['batch']
+        , 'fields': ['List']
+        , 'templates': make_templates('batch', ['default'])
+    },
+
     'text': {
           'name': 'ScRead.Text'
         , 'css': css['text']

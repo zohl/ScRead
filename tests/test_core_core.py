@@ -1,8 +1,8 @@
 import init
-
+import os
 from scread.misc.tools import drepr
 from scread.core import conf 
-from scread.core.api import col, dm, ms, tg, db, add_note
+from scread.core.api import col, dm, ms, tg, db, add_note, get_text, upd_note
 from scread.core.core import *
 from scread.core.queries import *
 
@@ -215,4 +215,60 @@ def test_update_estimations():
     assert len(execute(db(), query_available)) == 4
 
     drop()
+
+
+def make_file(name, contents):
+    f = open(name, 'w')
+    f.write(contents)
+    f.close()
     
+
+def test_fetch_file():
+    init()
+    
+    fn = 'test.dat'
+    contents = 'foo bar baz qux'
+    make_file(fn, contents)
+
+    add_note('text', 'texts', {'Source': fn, 'Text': ''})
+    [text_id] = execute(db(), texts() | select('@id'))
+    upd_note(text_id, {'Text': ''})
+
+    fetch_text(text_id)
+    assert get_text(text_id) == contents
+    
+    os.remove(fn)
+    drop()
+
+
+def test_unfold_batches():
+    init()
+
+    files = [
+          ('foobar.dat', 'foo bar foo bar')
+
+        , ('foobaz.dat', 'foo baz foo baz')
+        , ('fooqux.dat', 'foo qux foo qux')
+
+        , ('barbaz.dat', 'bar baz bar baz')
+        , ('barqux.dat', 'bar qux bar qux')
+    ]
+
+    map(lambda (fn, cs): make_file(fn, cs), files)
+
+    add_note('batch', 'texts', {'List': '\n'.join(['foobar.dat'])})
+
+    unfold_batches()
+    assert 0 == len(execute(db(), batches() | select('@id')))
+    assert 1 == len(execute(db(), texts() | select('@id')))
+
+    add_note('batch', 'texts', {'List': '\n'.join(['foobaz.dat', 'fooqux.dat'])})
+    add_note('batch', 'texts', {'List': '\n'.join(['barbaz.dat', 'barqux.dat'])})
+   
+    unfold_batches()
+    assert 0 == len(execute(db(), batches() | select('@id')))
+    assert 5 == len(execute(db(), texts() | select('@id')))
+    
+    map(lambda (fn, cs): os.remove(fn), files)
+    drop()
+

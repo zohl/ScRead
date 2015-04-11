@@ -1,9 +1,6 @@
 * bugs
 * features
-  - [ ] load from file
-  - [ ] model for bunch loading
   - [ ] add urban-dictionary http://www.urbandictionary.com/define.php?term=<test>
+
 * roadmap
-  - [ ] tests for core.fetch_pages
-  - [X] expand scraping tests
   - [ ] readme 

@@ -18,7 +18,7 @@ from scread.text.core import parse, estimate
 import conf
 
 import api
-from api import db, tg, empty_field
+from api import col, db, tg, empty_field, add_note, upd_note
 
 from scread.misc.sql import execute 
 from scread.misc.delay import dmap 
@@ -43,14 +43,42 @@ def reset():
     init()
 
 
+def unfold_batches():
+    res = execute(db(), batches() | select('@id', '@sfld'))
+    if len(res) == 0:
+        return
+
+    [ids, lists] = zip(*res)
+    data = filter(lambda s: len(s) > 0, ('\n'.join(lists)).split('\n'))
+
+    for src in data:
+        add_note('text', 'texts', {'Source': src, 'Text': ''})
+        [text_id] = execute(db(), texts() | where("@sfld = '%s'" % q(src)) | select('@id'))
+        upd_note(text_id, {'Text': ''})
+       
+    col().remNotes(ids)
+
+
 def get_empty_texts():
     return execute(db(), texts() | where(is_empty()) | select('@id'))
 
+
 def fetch_text(text_id):
-    [url] = execute(db(), texts() | where('@id = '+str(text_id)) | select('@sfld'))
-    if re.match(r' *https?://', url) is not None:
-        text = scrape(url)
-        api.upd_note(text_id, {'Text': text}, ['fetched'])
+    [src] = execute(db(), texts() | where('@id = '+str(text_id)) | select('@sfld'))
+    text = ''
+
+    # remote file, assume this is html-page
+    if re.match(r' *https?://', src) is not None:
+        text = scrape(src)
+
+    # local file, assume this is plain text in unicode
+    else:
+        f = open(src, 'r')
+        text = f.read().decode('utf-8')
+        f.close()
+        
+    api.upd_note(text_id, {'Text': text}, ['fetched'])
+
 
 def get_new_texts(order = 'none'):
     # Accepted order values: 'size', 'date'

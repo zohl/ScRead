@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import init 
+import os
 import re
 import sys
 import operator

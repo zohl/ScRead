@@ -62,5 +62,6 @@ is_not_empty = lambda: text_length() + ' > 1'
 
 words = lambda: notes() | where(model_is('word'))
 texts = lambda: notes() | where(model_is('text'))
+batches = lambda: notes() | where(model_is('batch'))
 
 

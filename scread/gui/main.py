@@ -60,6 +60,8 @@ def _scread_reset():
 
 
 def _scread_texts_fetch_from_web():
+    core.unfold_batches()
+
     texts = core.get_empty_texts()
     if len(texts) > 0:
         dmap(core.fetch_text, texts, show_progress, conf.feedback_time) 
