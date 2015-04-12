@@ -46,7 +46,7 @@ def merge_clusters(xs, cs):
     means = map(average, clusters)
     
     def is_near(i, j):
-       return abs(means[i] - means[j])**6 / (1 + (widths[i] + widths[j])**2) < 0.05
+       return abs(means[i] - means[j])**6 / (1 + (widths[i] + widths[j])**2) < 0.1
 
     adjs = map(lambda i: map(lambda j: is_near(i, j), range(i)), range(n))
 

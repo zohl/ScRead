@@ -35,7 +35,8 @@ def scrape(i, action = 'test'):
     try:
         (l_bound, r_bound) = get_article_bounds(i, blocks)
     finally:
-        output(blocks)
+        pass
+        #output(blocks)
 
     n = len(blocks)
     (xs, ys) = [normalize(range(n)), map(cost, blocks)] 

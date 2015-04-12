@@ -47,8 +47,12 @@ stem = lambda: '@sfld'
 maturity = lambda: 'min(1.0, @ivl*1.0/%d)' % conf.mature_threshold
 
 text_length = lambda: 'length(@flds) - length(@sfld)'
-is_empty = lambda: text_length() + ' <= 1'
-is_not_empty = lambda: text_length() + ' > 1'
+
+empty_field = lambda: '(N/A)'
+
+is_empty = lambda: "(@flds like '%%_%s')" % empty_field()
+is_not_empty = lambda: '(not %s)' % is_empty()
+
 
 [is_learning, is_suspended, is_buried] = map(
     lambda x: lambda: '@queue = ' + str(x), [0, -1, -2])

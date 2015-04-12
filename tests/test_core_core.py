@@ -232,7 +232,6 @@ def test_fetch_file():
 
     add_note('text', 'texts', {'Source': fn, 'Text': ''})
     [text_id] = execute(db(), texts() | select('@id'))
-    upd_note(text_id, {'Text': ''})
 
     fetch_text(text_id)
     assert get_text(text_id) == contents

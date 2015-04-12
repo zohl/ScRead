@@ -12,6 +12,7 @@ from operator import itemgetter
 from scread.misc.tools import drepr
 
 from scread.text import translate
+from scread.text.common import strip_html
 from scread.text.scrape import scrape
 from scread.text.core import parse, estimate
 
@@ -44,17 +45,16 @@ def reset():
 
 
 def unfold_batches():
-    res = execute(db(), batches() | select('@id', '@sfld'))
+    res = execute(db(), batches() | select('@id', '@flds'))
     if len(res) == 0:
         return
 
     [ids, lists] = zip(*res)
-    data = filter(lambda s: len(s) > 0, ('\n'.join(lists)).split('\n'))
-
+    data = filter(lambda s: len(s) > 1, ' '.join(map(strip_html, lists)).replace('\n', ' ').split(' '))
+    
     for src in data:
         add_note('text', 'texts', {'Source': src, 'Text': ''})
         [text_id] = execute(db(), texts() | where("@sfld = '%s'" % q(src)) | select('@id'))
-        upd_note(text_id, {'Text': ''})
        
     col().remNotes(ids)
 

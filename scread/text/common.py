@@ -29,7 +29,8 @@ tags_blocks = ['dd', 'div', 'p', 'pre', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ol'
 def strip_html(s):
     blocks = '(' + '|'.join(tags_blocks) + ')'
     return re.sub(r'</?[^<>]*/?>', '',                
-                  re.sub(r'(</%s *>)(<%s( [^<>]*)?>)' % (blocks, blocks), r'\1 \3', s, re.I))
+                  re.sub(r'(</%s *>)(<%s( [^<>]*)?>)' % (blocks, blocks)
+                       , r'\1 \3', s, flags = re.I))
 
 get_stem = lambda w: porter.stem(w.lower())
 

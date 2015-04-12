@@ -127,8 +127,6 @@ def add_tags(tags):
 
 
 
-empty_field = lambda: '(N/A)'
-
 def get_note(note_id):
     return col().getNote(note_id)
 
