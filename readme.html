@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<title>readme.html</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+
+</head>
+
+<body>
+
+<h1>ScRead (Anki plugin)</h1>
+
+<p>ScRead (short for Scrutinized Reading) is a plugin for Anki SRS.</p>
+
+<p>It is a set of tools to help you read texts in a foreign language. 
+In a nutshell, it ensures that you know all words in a text before
+you read it, and if not, it helps you to memorize them.</p>
+
+<h2>Requirements</h2>
+
+<ul>
+<li><a href="http://ankisrs.net/">Anki</a> — a spaced repetition flashcard program</li>
+<li><a href="http://www.soimort.org/translate-shell/">trans</a> — Google Translate
+CLI (optional)</li>
+<li><a href="http://sdcv.sourceforge.net/">sdcv</a> — console version of StarDict
+(optional)</li>
+</ul>
+
+<h2>Installation</h2>
+
+<h3>Manual</h3>
+
+<p>Copy <code>scread</code> folder and <code>scread_loader.py</code> to <code>addons</code> in your Anki's
+home directory.</p>
+
+<h3>Using ankiweb</h3>
+
+<p>(!TODO not shared yet)</p>
+
+<h2>Usage</h2>
+
+<h3>Getting started</h3>
+
+<p>Check menu for <code>Tools → ScRead</code> item. If this is your first time,
+choose <code>Init</code>. The decks will appear.</p>
+
+<p><img src="./static/screen-menu.png" alt="screen-menu" title="" />
+<img src="./static/screen-decks.png" alt="screen-decks" title="" /></p>
+
+<h3>Basic flow</h3>
+
+<p>This is a description of a typical cycle of using the plugin.</p>
+
+<h5>Adding texts</h5>
+
+<p>Choose subdeck <code>Texts</code> and add texts you would like to read. Make sure
+that type of note is set to <code>ScRead.Text</code> (see top left corner on the
+screenshot). There are two fields:</p>
+
+<ul>
+<li><code>Source</code> — source of the text, e.g. url of an article, a book's name,
+a chapter's number of a book, etc.</li>
+<li><code>Text</code> — the text by itself</li>
+</ul>
+
+<p><img src="./static/screen-text.png" alt="screen-text" title="" /></p>
+
+<p>Then choose <code>ScRead → Texts…</code> menu. There are few options:</p>
+
+<ul>
+<li><code>parse all</code> — Will parse all texts you have added. This may take a lot of
+time and result in enormous amount of cards, so use it wisely.</li>
+<li><code>parse next one</code> — Will parse next one text you have added in chronological
+order.</li>
+<li><code>parse next shortest one</code> — Will parse next shortest one text you have
+added. This is recommended option if you add unrelated texts.</li>
+</ul>
+
+<p>After that new cards will appear.</p>
+
+<p><img src="./static/screen-new-words.png" alt="screen-new-words" title="" /></p>
+
+<h5>Filtering words</h5>
+
+<p>Go to subdeck <code>Words → Unsorted</code>. There will be all (new) extracted
+words from your texts. For each card there you should choose either
+<code>Again</code> or <code>Good</code>:</p>
+
+<ul>
+<li><code>Again</code> means this word is new for you and you would like to learn it.</li>
+<li><code>Good</code> means this word is familiar to you, so you don't need it to be learned.</li>
+</ul>
+
+<p>Note that <code>Easy</code> button has no meaning, and each card will be checked only once.
+You don't need to clear all deck at once, the filtering process (this)
+and memorizing one (see the next paragraph) can be performed in parallel.</p>
+
+<p><img src="./static/screen-unsorted-deck.png" alt="screen-unsorted-deck" title="" /></p>
+
+<h5>Memorizing words</h5>
+
+<p>Choose <code>ScRead → Words… → add translations</code> to supply new cards with
+translations. There are few sources:</p>
+
+<ul>
+<li>Google Translate (via <code>trans</code> utility)</li>
+<li>StarDict dictionaries (via <code>sdcv</code> utility)</li>
+<li>Etymonline.com (works out-of-box) </li>
+</ul>
+
+<p>To avoid abusing web services there are delays between translations,
+so this stage might be quite long.</p>
+
+<p>After that new words will appear in <code>Words → Filtered</code> subdeck. It's a
+typical memorizing deck, so you just learn words there.</p>
+
+<p><img src="./static/screen-filtered-deck.png" alt="screen-filtered-deck" title="" /></p>
+
+<h5>Reading texts</h5>
+
+<p>Choose <code>ScRead → Texts… → update estimations</code>. This will determine which texts
+you will able to read and place them in <code>Texts → Available</code>
+subdeck. The rule of thumb is the most of new words must be in
+<em>mature</em> state (see Anki's statistics).</p>
+
+<h3>Special cases</h3>
+
+<h5>Updating</h5>
+
+<p>In order to update the plugin just replace it's files, restart Anki
+and choose <code>ScRead → Init</code>.</p>
+
+<h5>Clearing</h5>
+
+<p>In order to clean up decks choose <code>ScRead → Reset</code>. This will erase
+all data from Scread decks.</p>
+
+<h5>Marking words</h5>
+
+<p>There are two options in <code>Scread → Words…</code> menu:</p>
+
+<ul>
+<li><code>mark as known</code> — This is equivalent to choose <code>Good</code> for all cards in
+<code>Words → Unsorted</code> subdeck. It's useful when you add easy texts to
+mark all those words as well-known, so they won't bother you in the
+future.</li>
+<li><code>mark as unknown</code> — This is equivalent to choose <code>Again</code> for all cards
+in <code>Words → Unsorted</code> subdeck. It's useful when you have read a lot
+of texts, so it's unlikely to encounter a familiar word.</li>
+</ul>
+
+<h5>Scraping web-pages</h5>
+
+<p>In case of big amount of web articles there may be taken a benefit of
+scraping feature. To use it add new text with field <code>Source</code> filled
+with a url and empty <code>Text</code> field. After that choose <code>ScRead → Text… → fetch</code>.
+<code>Text</code> field will be filled with page contents and the note will be tagged as <code>fetched</code>.</p>
+
+<p>Heuristic algorithm that extracts contents in the most cases does fine
+with a portion of surfeit texts like comments and links to related
+articles. That's why the note is tagged, so it should be checked and
+edited if necessary.</p>
+
+<p>That's not perfect but much better than manual copying from browser.</p>
+
+<h5>Loading texts from files</h5>
+
+<p>Like in the previous case texts can be loaded from local filesystem. The files
+will be loaded "as is", without scraping procedure.</p>
+
+<p>It's better to specify absolute path, like <code>C:\books\chapter1.txt</code> or
+<code>~/books/chapter1.txt</code>.</p>
+
+<h5>Batch loading/scraping</h5>
+
+<p>In case of big amount of articles it may be tiresome to add note for
+each url. This may be accomplished with <code>ScRead.Batch</code> notes. </p>
+
+<p>Add a new note with <code>List</code> field filled with list of urls, each one on
+a separate line. Both local and remote urls can be specified. In the
+next invocation of <code>ScRead → Text… → fetch</code> corresponding notes will
+be created and filled.</p>
+
+<p><img src="./static/screen-batch.png" alt="screen-batch" title="" /></p>
+
+<h2>License</h2>
+
+<p>ScRead is licensed under GPL3.</p>
+
+<p><a href="http://tartarus.org/~martin/PorterStemmer/">Stemming algorithm</a> by
+Martin Porter is licensed under BSD-compatible license.</p>
+
+<h2>Changelog</h2>
+
+<h3>0.2.0 (2015-04-12)</h3>
+
+<ul>
+<li>Added scraping feature.</li>
+<li>Added batch model.</li>
+<li>Some bugs are fixed.</li>
+</ul>
+
+<h3>0.1.0 (2015-03-23)</h3>
+
+<ul>
+<li>All basic functions are implemented. Some testing required.</li>
+</ul>
+
+</body>
+</html>

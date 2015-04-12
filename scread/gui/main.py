@@ -29,7 +29,7 @@ show_done = lambda: tooltip('Done!')
 items = [['&ScRead', [
       '&Init'
     , [u'&Texts…', [
-          '&fetch from web'
+          '&fetch'
         , '--'
         , '&parse all'
         , 'parse &next one'
@@ -59,7 +59,7 @@ def _scread_reset():
     mw.deckBrowser.refresh()
 
 
-def _scread_texts_fetch_from_web():
+def _scread_texts_fetch():
     core.unfold_batches()
 
     texts = core.get_empty_texts()
