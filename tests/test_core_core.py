@@ -182,37 +182,54 @@ def test_add_translations():
 def test_update_estimations():
     init()
 
-    add_note('text', 'texts', {'Source': 'text1', 'Text': 'foo bar'})
-    add_note('text', 'texts', {'Source': 'text2', 'Text': 'foo bar baz qux'})
-    add_note('text', 'texts', {'Source': 'text2', 'Text': 'foo bar baz qux quux'})
-    add_note('text', 'texts', {'Source': 'text2', 'Text': 'foo bar baz'})
-    add_note('text', 'texts', {'Source': 'text2', 'Text': ''})
+    add_note('text', 'texts', {'Source': 'text1', 'Text': 'foo'})
+    add_note('text', 'texts', {'Source': 'text2', 'Text': 'foo bar'})
+    add_note('text', 'texts', {'Source': 'text3', 'Text': 'foo bar baz'})
+    add_note('text', 'texts', {'Source': 'text4', 'Text': 'bar baz qux'})
+    add_note('text', 'texts', {'Source': 'text5', 'Text': 'baz qux quux'})
+    add_note('text', 'texts', {'Source': 'text6', 'Text': 'quux foobar'})
+    add_note('text', 'texts', {'Source': 'text7', 'Text': 'foo bar qux'})
 
     text_ids = get_new_texts()
-    skip_duration = (conf.mature_threshold/3)*2
+    skip_duration = int(conf.mature_threshold/3.0)
     
-    query_available = (texts() | where(tag_is('available')) | select('*'))
+    get_state = lambda: execute(db(), texts() | where(tag_is('available')) | select('count(*)'))[0]
 
-    def process_text(text_id, is_familiar):
-        parse_text(text_id)
+
+    def process(i, mark = None):
+        parse_text(text_ids[i])
         populate_unsorted_deck()
-        mark_as('known' if is_familiar else 'new')
+        if mark is not None:
+            mark_as(mark)
         add_translations(lambda x: '<<'+x+'>>', lambda: ())
         execute(db(), cards() | update(('@ivl', '@ivl + %d' % skip_duration)))
         update_estimations(lambda: ())
 
-    
-    process_text(text_ids[0], False)
-    assert len(execute(db(), query_available)) == 1
+   
+    q_all = lambda: words()
+    q_checked = lambda: cards() | where(deck_is('unsorted'), is_suspended())
+    q_learning = lambda: cards() | where(deck_is('filtered'), is_not_suspended())
 
-    process_text(text_ids[1], True)
-    assert len(execute(db(), query_available)) == 2
+    def print_state():
+        print map(lambda q: execute(db(), q() | select('count(*)'))[0], [q_all, q_checked, q_learning])
 
-    process_text(text_ids[2], False)
-    assert len(execute(db(), query_available)) == 3
+    process(0, 'new')
+    assert 0 == get_state()
+    process(1, 'known')
+    assert 2 == get_state()
+    process(2, 'new')
+    assert 2 == get_state()
+    process(3, 'new')
+    assert 3 == get_state()
+    process(3, 'new')
+    assert 4 == get_state()
 
-    process_text(text_ids[3], False)
-    assert len(execute(db(), query_available)) == 4
+    process(4)
+    assert 4 == get_state()
+    process(5, 'new')
+    assert 5 == get_state()
+    process(6, 'new')
+    assert 7 == get_state()
 
     drop()
 
@@ -271,3 +288,4 @@ def test_unfold_batches():
     map(lambda (fn, cs): os.remove(fn), files)
     drop()
 
+test_update_estimations()

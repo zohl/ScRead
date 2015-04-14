@@ -166,20 +166,18 @@ def update_estimations(callback):
                        | where(tag_is('parsed'), tag_is_not('available'))
                        | select('@id'))
 
-    query_all = lambda: words() 
-    query_checked = lambda: (words() ^ 'n'
-                     | join(cards() ^ 'c' | where(tmpl_is('word', 'unsorted')
-                                                , is_suspended()), '@id', '@nid'))
+    query_all = lambda: cards()
+    query_checked = lambda: cards() | where(deck_is('unsorted'), is_suspended())
+    query_learning = lambda: cards() | where(deck_is('filtered'), is_not_suspended())
 
-    query_learning = lambda: (words() ^ 'n'
-                     | join(cards() ^ 'c' | where(tmpl_is('word', 'filtered')
-                                                , is_suspended()), '@id', '@nid'))
     estim = {}
-    map(lambda (q, val): estim.update(dict(execute(db(), q() | select(stem(), val)))), [
-          (query_all, '0')
-        , (query_checked, '1')
-        , (query_learning, maturity())
-    ])
+    map(lambda (q, val): estim.update(dict(execute(db(), q() ^ 'c'
+                                                   | join(words() ^ 'n', '@nid', '@id')
+                                                   | select(stem(), val)))), [
+                                                         (query_all, '0.0')
+                                                       , (query_checked, '1.0')
+                                                       , (query_learning, maturity())
+                                                   ])
  
     availability = dmap(lambda text: estimate(text, estim)
                         , map(api.get_text, text_ids)

@@ -40,6 +40,6 @@ def estimate(text, estim):
     return reduce(
           lambda acc, (_1, _2, stem): acc * estim[stem]
         , iter_words(text)
-        , 1) > 0.5
+        , 1.0) > 0.5
 
 
