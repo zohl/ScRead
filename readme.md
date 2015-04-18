@@ -22,13 +22,13 @@ Copy `scread` folder and `scread_loader.py` to `addons` in your Anki's
 home directory.
 
 ### Using ankiweb
-(!TODO not shared yet)
+(!TODO share on ankiweb)
 
 
 ## Usage 
 
 ### Getting started
-Check menu for `Tools → ScRead` item. If this is your first time,
+Open `Tools → ScRead` submenu. If this is your first time,
 choose `Init`. The decks will appear.
 
 ![screen-menu](./static/screen-menu.png)
@@ -42,36 +42,39 @@ Choose subdeck `Texts` and add texts you would like to read. Make sure
 that type of note is set to `ScRead.Text` (see top left corner on the
 screenshot). There are two fields:
 
-* `Source` — source of the text, e.g. url of an article, a book's name,
+* `Source` — the source of the text, e.g. url of an article, a book's name,
   a chapter's number of a book, etc.
 * `Text` — the text by itself
   
 ![screen-text](./static/screen-text.png)
 
-Then choose `ScRead → Texts…` menu. There are few options:
+Then perform parsing using `ScRead → Texts…` submenu. There are few options:
 
-* `parse all` — Will parse all texts you have added. This may take a lot of
-  time and result in enormous amount of cards, so use it wisely.
-* `parse next one` — Will parse next one text you have added in chronological
-  order.
-* `parse next shortest one` — Will parse next shortest one text you have
-  added. This is recommended option if you add unrelated texts.
+* `all` — Parse all texts you have added. This may take a lot of
+ time and result in an enormous amount of cards, so use it wisely.
+* `next one` — Parse next not parsed yet text in chronological
+ order. 
+* `next shortest one` — Parse the shortest not parsed yet text.
+ This is recommended option if you add unconnected texts. 
+
 
 After that new cards will appear.
 
 ![screen-new-words](./static/screen-new-words.png)
 
 ##### Filtering words
-Go to subdeck `Words → Unsorted`. There will be all (new) extracted
-words from your texts. For each card there you should choose either
+Go to subdeck `Words → Unsorted`. All (new) extracted words from your
+texts will be there. For each card there you should choose either
 `Again` or `Good`:
 
 * `Again` means this word is new for you and you would like to learn it.
-* `Good` means this word is familiar to you, so you don't need it to be learned.
+* `Good` means this word is familiar to you, so you don't need it to
+  be learned.
 
-Note that `Easy` button has no meaning, and each card will be checked only once.
-You don't need to clear all deck at once, the filtering process (this)
-and memorizing one (see the next paragraph) can be performed in parallel.
+Note that `Easy` button has no meaning, and each card will be checked
+only once.
+You don't need to clear all deck at once, filtering and adding
+translations can be interleaved.
 
 ![screen-unsorted-deck](./static/screen-unsorted-deck.png)
 
@@ -88,39 +91,40 @@ To avoid abusing web services there are delays between translations,
 so this stage might be quite long.
 
 After that new words will appear in `Words → Filtered` subdeck. It's a
-typical memorizing deck, so you just learn words there.
+typical memorizing deck, so use it to learn words as usual.
 
 
 ![screen-filtered-deck](./static/screen-filtered-deck.png)
 
 ##### Reading texts
 
-Choose `ScRead → Texts… → update estimations`. This will determine which texts
-you will able to read and place them in `Texts → Available`
-subdeck. The rule of thumb is the most of new words must be in
-*mature* state (see Anki's statistics).
+Choose `ScRead → Texts… → update estimations`. This will determine
+which texts you will able to read and place them in `Texts →
+Available` subdeck. The rule of thumb is that the most of new words
+must be in *mature* state (see Anki's statistics).
 
 
 ### Special cases
 
 ##### Updating
-In order to update the plugin just replace it's files, restart Anki
+In order to update the plugin just replace its files, restart Anki
 and choose `ScRead → Init`.
 
 ##### Clearing
 In order to clean up decks choose `ScRead → Reset`. This will erase
-all data from Scread decks.
+all data from ScRead decks.
 
 ##### Marking words
 There are two options in `Scread → Words…` menu:
 
-* `mark as known` — This is equivalent to choose `Good` for all cards in
+* `mark as known` — This is equal to choosing `Good` for all cards in
   `Words → Unsorted` subdeck. It's useful when you add easy texts to
-  mark all those words as well-known, so they won't bother you in the
+  mark all the words as well-known, so they won't bother you in the
   future.
 * `mark as unknown` — This is equivalent to choose `Again` for all cards
   in `Words → Unsorted` subdeck. It's useful when you have read a lot
-  of texts, so it's unlikely to encounter a familiar word.
+  of texts, so it's unlikely to encounter a familiar word that is not
+  in Anki's database.
 
 ##### Scraping web-pages
 In case of big amount of web articles there may be taken a benefit of
