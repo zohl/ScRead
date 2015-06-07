@@ -47,7 +47,7 @@ def get_page(url):
 
 
 def get_stdout(*args):
-    return subprocess.check_output(args).decode('utf-8').split('\n')
+    return subprocess.check_output(args).decode('utf-8')
 
 
 def remove_camel_case(text):

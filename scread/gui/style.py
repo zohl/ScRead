@@ -4,8 +4,7 @@
 
 from scread.misc.tools import unfold
 
-
-fmt_header = lambda s: '<p class = "header">'+ s +'</p>'
+fmt_header = lambda s: ('' if len(s) == 0 else '<p class = "header">'+ s +'</p>')
 fmt_entry = lambda s: '<p class = "entry">'+ s +'</p>'
 fmt_delimiter = lambda: '<hr/>'
 fmt_highlight = lambda s: '<span class = "hl">' + s + '</span>'
@@ -58,6 +57,9 @@ css = unfold({
               
               .translation .entry {
                 text-align: left;
+                margin: 0px;
+                padding: 0px;
+                padding-left: 1em;
               }
               """ % font_size
 })

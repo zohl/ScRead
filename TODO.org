@@ -1,3 +1,4 @@
 * bugs
 * features
   - [ ] add urban-dictionary http://www.urbandictionary.com/define.php?term=<test>
+  - [ ] add http://www.merriam-webster.com/dictionary/<test>
