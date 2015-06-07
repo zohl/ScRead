@@ -61,3 +61,15 @@ def merge(lhs, rhs):
     return result 
 
 
+def split_list(p, xs):
+    i, j, n = 0, 0, len(xs)
+    
+    while i < n:
+        while (i < n) and (not p(xs[i])):
+            i += 1
+        j = i
+        while (j < n) and (p(xs[j])):
+            j += 1
+        if i < n:
+            yield xs[i:j]
+            i = j + 1
