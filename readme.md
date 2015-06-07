@@ -164,6 +164,8 @@ ScRead is licensed under GPL3.
 Martin Porter is licensed under BSD-compatible license.
 
 ## Changelog
+### 0.3.0 (2015-06-07)
+* Fixed compatibility issues with trans and sdcv.
 
 ### 0.2.0 (2015-04-12)
 

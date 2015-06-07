@@ -17,7 +17,7 @@ __credits__ = [
   , "Douglas Harper (http://etymonline.com)"]
 
 __license__ = "GPL"
-__version__ = "0.2.1"
+__version__ = "0.3.0"
 __maintainer__ = "Al Zohali"
 __email__ = "zohl@fmap.me"
 __status__ = "Testing"
