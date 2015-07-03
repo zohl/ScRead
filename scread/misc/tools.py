@@ -73,3 +73,26 @@ def split_list(p, xs):
         if i < n:
             yield xs[i:j]
             i = j + 1
+
+
+def with_retry(n):
+    
+    def decorator(f):
+
+        cl = Closure()
+        cl.tries = n
+
+        def result(*args):
+            res = None
+            try:
+                res = f(*args)
+            except:
+                if cl.tries > 0:
+                    cl.tries -= 1
+                    return result(*args)
+                else:
+                    raise
+
+            return res
+        return result
+    return decorator

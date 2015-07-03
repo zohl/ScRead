@@ -99,7 +99,7 @@ def _scread_texts_update_estimations():
 
 
 def _scread_words_add_translations():
-    core.add_translations(translate.use_all, show_progress)
+    core.add_translations(translate.translate, show_progress)
     mw.reset()
     show_done()
 
