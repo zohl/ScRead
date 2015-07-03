@@ -11,7 +11,6 @@ from operator import itemgetter
 
 from scread.misc.tools import drepr
 
-from scread.text import translate
 from scread.text.common import strip_html
 from scread.text.scrape import scrape
 from scread.text.core import parse, estimate

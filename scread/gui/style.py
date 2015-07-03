@@ -5,7 +5,7 @@
 from scread.misc.tools import unfold
 
 fmt_header = lambda s: ('' if len(s) == 0 else '<p class = "header">'+ s +'</p>')
-fmt_entry = lambda s: '<p class = "entry">'+ s +'</p>'
+fmt_entry = lambda s: '<div class = "entry">'+ s +'</div>'
 fmt_delimiter = lambda: '<hr/>'
 fmt_highlight = lambda s: '<span class = "hl">' + s + '</span>'
 fmt_context = lambda s: '<p class = "context">' + s + '</p>'

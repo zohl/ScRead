@@ -7,12 +7,13 @@ from operator import itemgetter
 
 from common import get_stem, strip_html, get_page, get_stdout
 from scread.gui.style import fmt_header, fmt_entry, fmt_delimiter
-from scread.misc.tools import drepr, split_list
+from scread.misc.tools import drepr, split_list, with_retry
 from scread.misc.delay import delayed 
 
 
 # block ::= (word, header, [entry])
 
+@with_retry(2)
 def make_translator(get_source, parse):
 
     def result(word):
@@ -21,12 +22,12 @@ def make_translator(get_source, parse):
         try:
             blocks = sorted(filter(pr, parse(get_source(word))))
         except:
-            return ''
+            return []
         
         fmt_block = lambda (word, header, entries): ''.join( 
               [fmt_header('%s (%s)' % (word, header))] + map(fmt_entry, entries))
             
-        return '\n'.join(map(fmt_block, blocks))
+        return map(fmt_block, blocks)
 
     return result
 
@@ -35,7 +36,7 @@ def make_translator(get_source, parse):
 def google_translate_parse(raw):
     raw = raw.split('\n')
     m = re.match(r'(.* (\w+))$', raw[0])
-    header_prefix, word = 'Google Translate: ' + m.group(1) + ', ', m.group(2)
+    header_prefix, word = 'Google Translate, ' + m.group(1) + ', ', m.group(2)
     make_block = lambda b: (word, header_prefix + b[0], b[1:][::2])
     return map(make_block,
                split_list(lambda s: len(s) > 0, map(lambda s: s.strip(), raw[2:])))
@@ -55,7 +56,7 @@ def stardict_parse(raw):
 
     def make_block(b):
         ls = b.split('\n')
-        return (ls[1][3:], ls[0][3:], ls[2:])
+        return (ls[1][3:], 'Stardict, ' + ls[0][3:], ls[2:])
 
     return map(lambda m: make_block(m.group(1))
              , re.finditer('(-->.*?-->.*?)(?=-->|$)', raw, flags = re.S))
@@ -81,10 +82,45 @@ use_etymonline = make_translator(
         + get_stem(w)), etymonline_parse)
 
 
-_choices = dict(sorted(
-      filter(lambda (name, _): name.startswith('use_'), locals().items())
-    , key = itemgetter(0)))
 
-use_all = delayed(0.3)(lambda word: fmt_delimiter().join(
-    filter(lambda s: len(s) > 0
-         , map(lambda f: f(word), _choices.values()))))
+def urban_dictionary_parse(raw):
+    elem = lambda name: 'class=[\'"]%s[\'"][^>]*>' % name
+    data = lambda name: '(?P<%s>[^<]*)' % name
+    
+    pattern = '.*?'.join([
+        elem('def-panel')
+      , elem('def-header'), elem('word'), data('word')
+      , elem('meaning'), data('meaning')
+      , elem('example'), data('example')
+      , elem('contributor'), elem('author'), data('author')
+      , elem('def-footer')
+      , elem('thumb up'), elem('count'), data('thumb_up')
+      , elem('thumb down'), elem('count'), data('thumb_down')])
+   
+    def make_block(m):
+        d = m.groupdict()
+        word = d['word']
+        header = ('Urban dictionary, by ' +d['author'] +
+                 ', rating: +%s -%s' % (d['thumb_up'], d['thumb_down']))
+        entries = d['meaning'].split('<br/>') +['--'] + d['example'].split('<br/>')
+        
+        return (word, header, entries)
+
+    return map(make_block, re.finditer(pattern, raw, flags = re.S))
+
+        
+use_urban_dictionary = make_translator(
+    lambda w: get_page('http://www.urbandictionary.com/define.php?term='+w)
+  , urban_dictionary_parse)
+
+
+
+@delayed(0.5)
+def translate(word):
+    trs = [
+        use_stardict
+      , use_google_translate
+      , use_etymonline
+      , use_urban_dictionary]
+
+    return fmt_delimiter().join(sum(map(lambda f: (f(word))[:3], trs), []))

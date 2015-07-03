@@ -164,6 +164,10 @@ ScRead is licensed under GPL3.
 Martin Porter is licensed under BSD-compatible license.
 
 ## Changelog
+### 0.4.0 (2015-07-03)
+* Added Urban Dictionary support.
+* Small visual improvements.
+
 ### 0.3.0 (2015-06-07)
 * Fixed compatibility issues with trans and sdcv.
 
