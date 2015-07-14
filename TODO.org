@@ -1,6 +1,0 @@
-* bugs
-* features
-  - [ ] add http://www.merriam-webster.com/dictionary/<test>
-  - [ ] mw.progress
-  - [ ] hotkeys
-
