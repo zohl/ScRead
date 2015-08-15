@@ -4,6 +4,7 @@
 
 import re
 from operator import itemgetter
+from HTMLParser import HTMLParser   
 
 from common import get_stem, strip_html, get_page, get_stdout
 from scread.gui.style import fmt_header, fmt_entry, fmt_delimiter
@@ -20,7 +21,7 @@ def make_translator(get_source, parse):
         pr = lambda (w, _1, _2): get_stem(word) == get_stem(w)
         blocks = []
         try:
-            blocks = sorted(filter(pr, parse(get_source(word))))
+            blocks = filter(pr, parse(get_source(word)))
         except:
             return []
         
@@ -83,30 +84,177 @@ use_etymonline = make_translator(
 
 
 
-def urban_dictionary_parse(raw):
-    elem = lambda name: 'class=[\'"]%s[\'"][^>]*>' % name
-    data = lambda name: '(?P<%s>[^<]*)' % name
+class UrbanDictionaryHTMLParser(HTMLParser):
     
-    pattern = '.*?'.join([
-        elem('def-panel')
-      , elem('def-header'), elem('word'), data('word')
-      , elem('meaning'), data('meaning')
-      , elem('example'), data('example')
-      , elem('contributor'), elem('author'), data('author')
-      , elem('def-footer')
-      , elem('thumb up'), elem('count'), data('thumb_up')
-      , elem('thumb down'), elem('count'), data('thumb_down')])
-   
-    def make_block(m):
-        d = m.groupdict()
-        word = d['word']
-        header = ('Urban dictionary, by ' +d['author'] +
-                 ', rating: +%s -%s' % (d['thumb_up'], d['thumb_down']))
-        entries = d['meaning'].split('<br/>') +['--'] + d['example'].split('<br/>')
-        
-        return (word, header, entries)
+    def mk_matchers(conds):
+    
+        def match_start(self, name, attrs):
+            assert(name in conds)
+    
+            if name not in self._markers:
+                if conds[name](attrs):
+                    self._markers[name] = 0 + self._depth
+                    return True
+            else:
+                assert(self._markers[name] - self._depth < 0)
+                return True
+            
+            return False
+    
+            
+        def match_end(self, name):
+            assert(name in conds)
+    
+            if name in self._markers:
+                if self._markers[name] - self._depth == 0:
+                    self._markers.pop(name)
+                    return True
+    
+            return False
+    
+        return (match_start, match_end)
+    
+    
+    is_class = lambda name: lambda attrs: ('class', name) in attrs
 
-    return map(make_block, re.finditer(pattern, raw, flags = re.S))
+    conds = {       
+      'def-panel': is_class('def-panel')
+    , 'def-header': is_class('def-header')
+    , 'word': is_class('word')
+    , 'meaning': is_class('meaning')
+    , 'example': is_class('example')
+    , 'contributor': is_class('contributor')
+    , 'author': is_class('author')
+    , 'def-footer': is_class('def-footer')
+    , 'thumb-up': is_class('thumb up')
+    , 'thumb-down': is_class('thumb down')
+    , 'count': is_class('count')
+    }
+
+    (_match_start, _match_end) = mk_matchers(conds)
+
+    
+    def __init__(self):
+        HTMLParser.__init__(self)
+
+        self._markers = {}
+        self._depth = 0
+
+        self._buffers = {}
+        self._current_buffer = None
+
+        self._blocks = []
+        self._current_block = None
+
+
+    def _append(self, data):
+        if self._current_buffer is not None:
+            self._buffers[self._current_buffer] += data
+       
+    def _set_buffer(self, buffer_name):
+        if self._current_buffer != buffer_name:
+            self._buffers[buffer_name] = ''
+            self._current_buffer = buffer_name
+        
+    def _end_block(self):
+        if self._current_block is not None and len(self._current_block) == 6:
+            self._blocks.append(self._current_block)
+            self._markers.clear()
+            self._current_block = None
+
+
+    def handle_starttag(self, tag, attrs):
+        self._depth += 1
+        self._append('<%s>' % tag)
+        
+        if self._match_start('def-panel', attrs):
+
+            if self._current_block is None:
+                self._current_block = {}
+
+            if self._match_start('def-header', attrs):
+                if self._match_start('word', attrs):
+                    self._set_buffer('word')
+
+            if self._match_start('meaning', attrs):
+                self._set_buffer('meaning')
+
+            if self._match_start('example', attrs):
+                self._set_buffer('example')
+                
+            if self._match_start('contributor', attrs):
+                if self._match_start('author', attrs):
+                    self._set_buffer('author')
+
+            if self._match_start('def-footer', attrs):
+                if self._match_start('thumb-up', attrs):
+                    if self._match_start('count', attrs):
+                        self._set_buffer('thumb-up')
+
+                if self._match_start('thumb-down', attrs):
+                    if self._match_start('count', attrs):
+                        self._set_buffer('thumb-down')
+
+
+    def handle_endtag(self, tag):
+
+        if self._match_end('def-panel'): pass
+
+        if self._match_end('def-header'): pass
+        if self._match_end('word'):
+            self._current_block['word'] = self._buffers['word']
+
+        if self._match_end('meaning'): 
+            self._current_block['meaning'] = self._buffers['meaning']
+
+        if self._match_end('example'): 
+            self._current_block['example'] = self._buffers['example']
+
+        if self._match_end('contributor'): pass
+        if self._match_end('author'): 
+            self._current_block['author'] = self._buffers['author']
+
+
+        if self._match_end('def-footer'): pass
+
+        if self._match_end('thumb-up'): pass
+        if self._match_end('thumb-down'): pass
+
+        if self._match_end('count'): 
+            if 'thumb-up' in self._markers:
+                self._current_block['thumb-up'] = self._buffers['thumb-up']
+            if 'thumb-down' in self._markers:
+                self._current_block['thumb-down'] = self._buffers['thumb-down']
+
+        self._depth -= 1
+        self._append('</%s>' % tag)
+
+        self._end_block()
+
+    def handle_data(self, data):
+        self._append(data)
+
+
+
+def urban_dictionary_parse(raw):
+   
+    def format_block(b):
+        word = b['word']
+        header = ('Urban dictionary, by ' +b['author'] +
+                 ', rating: +%s -%s' % (b['thumb-up'], b['thumb-down']))
+
+        entries = b['meaning'].split('<br/>') +['--'] + b['example'].split('<br/>')
+        clear_entry = lambda s: re.sub('(\n|</?[^>]+>)', '', s)
+        return (word, header, map(clear_entry, entries))
+
+    parser = UrbanDictionaryHTMLParser()
+    parser.feed(raw)
+    parser.close()
+    sort_key = lambda x, y: (x - y)/(1 + x + y)
+    blocks = sorted(parser._blocks
+                  , key = lambda b: sort_key(float(b['thumb-up']), float(b['thumb-down'])))
+
+    return map(format_block, parser._blocks)
 
         
 use_urban_dictionary = make_translator(
